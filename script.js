@@ -2,11 +2,14 @@ const stations = [
     { name: "COPE Nacional", url: "https://net1-cope-rrcast.flumotion.com/cope/net1-low.mp3" },
     { name: "Radio Nacional (RNE 1)", url: "https://rtvelivestream.rtve.es/rtvesec/rne/rne_r1_main.m3u8" },
     { name: "Cadena SER", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/CADENASER.mp3" },
+    { name: "Radio Marca", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/RADIOMARCA_NACIONAL.mp3" }, 
     { name: "Los 40 Principales", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/LOS40.mp3" },
     { name: "Funky house", url: "https://stream.technolovers.fm/funky-house" },
     { name: "Funky disco", url: "https://funky-disco-hits.stream.laut.fm/funky-disco-hits" },
-    { name: "Funky 80's", url: "https://play.radioking.io/fm80funkymusic/523739" }, // Se añadió la coma que faltaba
-    { name: "Radio Marca", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/RADIOMARCA_NACIONAL.mp3" } // URL optimizada para navegadores
+    { name: "Funky 80's", url: "https://play.radioking.io/fm80funkymusic/523739" },
+    { name: "Deep House", url: "https://hits1deep-audiomediaradio.radioca.st/deep" }, 
+    { name: "Lo mejor del Deep House", url: "http://HearMe.fm:8023/stream" } 
+
 ];
 
 // Estado global de la app
