@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radio Pro - España</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Importación de las Google Fonts elegidas -->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;700&family=Amatic+SC:wght@700&family=Caveat:wght@700&family=Dancing+Script:wght@700&family=Lobster&family=Metal+Mania&family=Yellowtail&family=Permanent+Marker&family=Piedra&family=Sriracha&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Botón de Menú Hamburguesa -->
+    <button id="menu-toggle" class="menu-toggle">☰</button>
+
+    <!-- Menú Lateral (Sidebar) -->
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h3>Emisoras</h3>
+            <button id="close-menu" class="close-menu">✕</button>
+        </div>
+        
+        <!-- Buscador dentro del menú -->
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="🔍 Buscar emisora...">
+        </div>
+
+        <!-- Lista de Estaciones (se llena con JS) -->
+        <ul id="station-list" class="station-list"></ul>
+    </div>
+
+    <!-- Capa oscura que aparece cuando el menú está abierto -->
+    <div id="overlay" class="overlay"></div>
+
+    <div class="radio-card">
+        <!-- Indicador de señal en directo -->
+        <div class="live-badge" id="live-indicator">EN DIRECTO</div>
+
+        <!-- Cabecera: Título y Reloj Digital -->
+        <div class="header-container">
+            <h1>📻 Radio Online</h1>
+            <div id="digital-clock" class="digital-clock">00:00:00</div>
+        </div>
+        
+        <!-- Pantalla de Información del reproductor -->
+        <div class="now-playing">
+            <!-- Animación de barras de sonido -->
+            <div class="visualizer" id="visualizer">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            <p id="status">Selecciona una emisora</p>
+            <h2 id="current-station">-</h2>
+            <p id="timer-display" class="timer-display"></p>
+        </div>
+
+        <!-- Sección del Temporizador de apagado -->
+        <div class="timer-section">
+            <span>Dormir en:</span>
+            <div class="timer-buttons">
+                <button onclick="setTimer(15)">15m</button>
+                <button onclick="setTimer(30)">30m</button>
+                <button onclick="setTimer(60)">60m</button>
+                <button onclick="setTimer(0)" class="off">Off</button>
+            </div>
+        </div>
+
+        <!-- Etiqueta de audio invisible -->
+        <audio id="audio-player"></audio>
+        
+        <!-- Botón principal de control -->
+        <div class="controls">
+            <button id="btn-play-pause">Reproducir</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
