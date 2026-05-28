@@ -1,271 +1,255 @@
 body {
     font-family: 'Sriracha', cursive; /* Establece la fuente Sriracha como principal */
-    background: linear-gradient(-45deg, #050505, #1e2a4a, #0f0c29, #24243e); /* Degradado de fondo animado con colores oscuros */
-    background-size: 400% 400%; /* Tamaño necesario para que el degradado se pueda desplazar */
-    animation: gradientBG 15s ease infinite; /* Asigna la animación de movimiento al fondo */
-    color: #ffffff; /* Define el color blanco para todos los textos */
-    display: flex; /* Activa el modelo flexbox para posicionamiento */
-    justify-content: center; /* Centra el contenido en el eje horizontal */
-    align-items: center; /* Centra el contenido en el eje vertical */
-    min-height: 100vh; /* Asegura que el contenedor ocupe el 100% de la altura de pantalla */
-    margin: 0; /* Elimina márgenes externos por defecto */
-    overflow: hidden; /* Oculta barras de scroll para mantener estética de app */
+    background: linear-gradient(-45deg, #050505, #1e2a4a, #0f0c29, #24243e); /* Degradado de fondo animado */
+    background-size: 400% 400%; /* Tamaño necesario para el movimiento del degradado */
+    animation: gradientBG 15s ease infinite; /* Activa la animación del fondo */
+    color: #ffffff; /* Color de texto blanco general */
+    display: flex; /* Uso de flexbox para centrado */
+    justify-content: center; /* Centrado horizontal */
+    align-items: center; /* Centrado vertical */
+    min-height: 100vh; /* Altura total de la pantalla */
+    margin: 0; /* Sin márgenes externos */
+    overflow: hidden; /* Evita scrolls innecesarios */
 }
 
 @keyframes gradientBG {
-    0% { background-position: 0% 50%; } /* Posición inicial del fondo degradado */
-    50% { background-position: 100% 50%; } /* Posición central del fondo degradado */
-    100% { background-position: 0% 50%; } /* Posición final del fondo degradado */
+    0% { background-position: 0% 50%; } /* Inicio del degradado */
+    50% { background-position: 100% 50%; } /* Punto medio del degradado */
+    100% { background-position: 0% 50%; } /* Fin del degradado */
 }
 
 .menu-toggle {
-    position: fixed; /* Mantiene el botón anclado en un lugar fijo de la pantalla */
-    top: 20px; /* Distancia desde la parte superior */
-    left: 20px; /* Distancia desde la parte izquierda */
-    background: rgba(233, 69, 96, 0.9); /* Color de fondo rojizo con transparencia */
-    border: none; /* Elimina el borde del botón */
-    color: white; /* Color blanco para el icono de hamburguesa */
-    font-size: 1.5rem; /* Define el tamaño del icono */
-    padding: 10px 15px; /* Espaciado interno para hacer el botón más grande */
-    border-radius: 12px; /* Redondeado de las esquinas */
-    cursor: pointer; /* Cambia el cursor a mano al posicionarse encima */
-    z-index: 100; /* Asegura que el botón esté por encima de la tarjeta */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3); /* Añade una sombra para dar profundidad */
+    position: fixed; /* Botón anclado a la pantalla */
+    top: 20px; /* Separación superior */
+    left: 20px; /* Separación izquierda */
+    background: rgba(233, 69, 96, 0.9); /* Fondo rojo semitransparente */
+    border: none; /* Quita el borde */
+    color: white; /* Icono blanco */
+    font-size: 1.5rem; /* Tamaño del icono hamburguesa */
+    padding: 10px 15px; /* Espaciado interno */
+    border-radius: 12px; /* Esquinas redondeadas */
+    cursor: pointer; /* Cursor de mano */
+    z-index: 100; /* Prioridad de visualización */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3); /* Sombra suave */
 }
 
 .sidebar {
-    position: fixed; /* Posicionamiento fijo para el menú lateral */
-    top: 0; /* Alineado al borde superior */
-    left: -300px; /* Esconde el menú a la izquierda fuera de la vista */
+    position: fixed; /* Menú anclado */
+    top: 0; /* Desde arriba */
+    left: -300px; /* Oculto por defecto */
     width: 280px; /* Ancho del menú lateral */
-    height: 100%; /* Ocupa toda la altura disponible */
-    background: rgba(10, 10, 25, 0.98); /* Fondo oscuro casi opaco */
-    backdrop-filter: blur(15px); /* Aplica desenfoque al fondo que se ve detrás */
-    z-index: 1000; /* Prioridad máxima de visualización */
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Animación de entrada suave */
-    padding: 20px; /* Espaciado interno de los elementos del menú */
-    box-sizing: border-box; /* Incluye el padding dentro del ancho total */
+    height: 100%; /* Alto total */
+    background: rgba(10, 10, 25, 0.98); /* Fondo oscuro opaco */
+    backdrop-filter: blur(15px); /* Desenfoque del fondo */
+    z-index: 1000; /* Encima de todo */
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Transición suave de entrada */
+    padding: 20px; /* Espaciado interno */
+    box-sizing: border-box; /* Padding incluido en el ancho */
 }
 
 .sidebar.open {
-    left: 0; /* Mueve el menú a la posición visible en pantalla */
+    left: 0; /* Posición al abrirse */
 }
 
 .sidebar-header {
-    display: flex; /* Activa flexbox para la cabecera del menú */
-    justify-content: space-between; /* Separa el título de la X de cierre */
-    align-items: center; /* Centra los elementos verticalmente */
-    margin-bottom: 25px; /* Espacio debajo de la cabecera */
+    display: flex; /* Contenedor flexible */
+    justify-content: space-between; /* Elementos a los extremos */
+    align-items: center; /* Alineación vertical */
+    margin-bottom: 25px; /* Espacio inferior */
 }
 
 .close-menu {
-    background: none; /* Elimina el fondo del botón de cierre */
-    border: none; /* Elimina el borde */
-    color: #ff4d4d; /* Color rojo para la X */
+    background: none; /* Sin fondo */
+    border: none; /* Sin borde */
+    color: #ff4d4d; /* Color rojo de la X */
     font-size: 1.4rem; /* Tamaño de la X */
-    cursor: pointer; /* Cambia el cursor a mano */
+    cursor: pointer; /* Cursor de mano */
 }
 
 .overlay {
-    position: fixed; /* Capa que cubre toda la pantalla */
-    top: 0; /* Desde el inicio superior */
-    left: 0; /* Desde el inicio izquierdo */
-    width: 100%; /* Cubre todo el ancho */
-    height: 100%; /* Cubre todo el alto */
-    background: rgba(0,0,0,0.7); /* Oscurece el fondo con un tono negro */
+    position: fixed; /* Capa sobre toda la pantalla */
+    top: 0; /* Desde arriba */
+    left: 0; /* Desde la izquierda */
+    width: 100%; /* Ancho total */
+    height: 100%; /* Alto total */
+    background: rgba(0,0,0,0.7); /* Oscurecimiento del fondo */
     display: none; /* Oculto por defecto */
-    z-index: 999; /* Justo debajo del menú lateral */
+    z-index: 999; /* Por debajo del sidebar */
 }
 
 .overlay.active {
-    display: block; /* Muestra la capa cuando el menú está abierto */
+    display: block; /* Visible cuando el menú abre */
 }
 
 .radio-card {
-    background: rgba(255, 255, 255, 0.07); /* Fondo estilo cristal muy transparente */
-    backdrop-filter: blur(25px); /* Desenfoque intenso estilo glassmorphism */
-    padding: 30px; /* Espacio interior de la tarjeta */
-    border-radius: 35px; /* Esquinas muy redondeadas */
-    width: 90%; /* Ancho adaptable a dispositivos móviles */
-    max-width: 380px; /* Límite de anchura para pantallas grandes */
-    box-shadow: 0 25px 60px rgba(0,0,0,0.7); /* Sombra muy marcada para dar relieve */
-    border: 1px solid rgba(255,255,255,0.15); /* Borde sutil transparente */
-    position: relative; /* Necesario para ubicar elementos internos absolutos */
+    background: rgba(255, 255, 255, 0.07); /* Fondo de cristal transparente */
+    backdrop-filter: blur(25px); /* Desenfoque tipo cristal */
+    padding: 30px; /* Espaciado interno */
+    border-radius: 35px; /* Bordes muy redondeados */
+    width: 90%; /* Ancho responsivo */
+    max-width: 380px; /* Ancho máximo */
+    box-shadow: 0 25px 60px rgba(0,0,0,0.7); /* Sombra pronunciada */
+    border: 1px solid rgba(255,255,255,0.15); /* Borde de cristal */
+    position: relative; /* Para el badge flotante */
 }
 
 .header-container {
-    display: flex; /* Distribución en línea */
-    justify-content: space-between; /* Elementos en extremos opuestos */
-    align-items: center; /* Centrado vertical */
+    display: flex; /* Alineación horizontal */
+    justify-content: space-between; /* Elementos a los lados */
+    align-items: center; /* Alineación vertical */
     margin-bottom: 15px; /* Espacio inferior */
 }
 
 .header-container h1 {
-    font-size: 1rem; /* Tamaño de texto para el título */
-    margin: 0; /* Sin márgenes adicionales */
-    opacity: 0.9; /* Un poco de transparencia */
+    font-size: 1rem; /* Tamaño del título */
+    margin: 0; /* Sin márgenes */
+    opacity: 0.9; /* Ligera transparencia */
 }
 
 .digital-clock {
-    font-family: 'Lobster', cursive; /* Fuente especial para el reloj */
-    font-size: 1rem; /* Tamaño de los números */
-    color: #00d2ff; /* Color azul brillante */
-    background: rgba(0,0,0,0.4); /* Fondo oscuro para el reloj */
-    padding: 5px 10px; /* Espacio interno */
-    border-radius: 8px; /* Bordes suaves */
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.5); /* Sombra interna para efecto profundidad */
+    font-family: 'Lobster', cursive; /* Fuente Lobster para el reloj */
+    font-size: 1rem; /* Tamaño del reloj */
+    color: #00d2ff; /* Color cian */
+    background: rgba(0,0,0,0.4); /* Fondo oscuro */
+    padding: 5px 10px; /* Espaciado interno */
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.5); /* Sombra interna */
 }
 
 .live-badge {
-    position: absolute; /* Ubicación libre dentro de la tarjeta */
-    top: -12px; /* Eleva el indicador sobre el borde */
-    right: 30px; /* Lo desplaza a la derecha */
-    background: #ff0000; /* Color rojo de alerta */
-    font-size: 0.65rem; /* Texto muy pequeño */
-    padding: 5px 10px; /* Espaciado del texto */
-    border-radius: 6px; /* Bordes poco redondeados */
+    position: absolute; /* Posición absoluta */
+    top: -12px; /* Flotando arriba */
+    right: 30px; /* Flotando a la derecha */
+    background: #ff0000; /* Color rojo */
+    font-size: 0.65rem; /* Texto pequeño */
+    padding: 5px 10px; /* Espaciado interno */
+    border-radius: 6px; /* Redondeado */
     font-weight: bold; /* Texto en negrita */
-    box-shadow: 0 4px 10px rgba(255,0,0,0.4); /* Brillo rojo alrededor */
-    display: none; /* Se activa mediante JavaScript */
+    box-shadow: 0 4px 10px rgba(255,0,0,0.4); /* Sombra roja */
+    display: none; /* Oculto por defecto */
 }
 
 .now-playing {
-    margin: 20px 0; /* Espacio vertical */
-    padding: 25px; /* Espacio interno */
-    background: rgba(255,255,255,0.04); /* Fondo muy sutil */
-    border-radius: 25px; /* Redondeado de la sección */
+    margin: 20px 0; /* Separación vertical */
+    padding: 25px; /* Espaciado interno */
+    background: rgba(255,255,255,0.04); /* Fondo para info actual */
+    border-radius: 25px; /* Bordes redondeados */
     text-align: center; /* Texto centrado */
-    min-height: 120px; /* Altura mínima para evitar saltos visuales al cargar */
 }
 
 .timer-display {
     font-size: 0.75rem; /* Tamaño pequeño */
     color: #ff4d6d; /* Color rosado */
     margin-top: 10px; /* Espacio superior */
-    font-weight: bold; /* Texto resaltado */
+    font-weight: bold; /* Texto en negrita */
 }
 
 .visualizer {
     display: flex; /* Barras en línea */
-    justify-content: center; /* Centrado horizontal */
-    gap: 5px; /* Separación entre barras */
-    height: 25px; /* Altura del visualizador */
+    justify-content: center; /* Centradas */
+    gap: 5px; /* Espacio entre barras */
+    height: 25px; /* Alto del visualizador */
     margin-bottom: 15px; /* Espacio inferior */
-    align-items: flex-end; /* Barras crecen de abajo hacia arriba */
-    display: none; /* Oculto hasta que empiece la música */
+    align-items: flex-end; /* Barras crecen hacia arriba */
+    display: none; /* Oculto por defecto */
 }
 
 .bar {
-    width: 4px; /* Ancho de la barrita */
+    width: 4px; /* Ancho de la barra */
     height: 10px; /* Altura base */
     background: #00d2ff; /* Color cian */
     border-radius: 2px; /* Redondeado */
-    animation: bounce 1s ease-in-out infinite; /* Movimiento constante */
+    animation: bounce 1s ease-in-out infinite; /* Animación de rebote */
 }
 
 @keyframes bounce {
-    0%, 100% { height: 6px; } /* Estado más bajo */
-    50% { height: 25px; } /* Estado más alto */
-}
-
-.volume-container {
-    display: flex; /* Alineación horizontal */
-    align-items: center; /* Centrado vertical */
-    gap: 10px; /* Espacio entre iconos y barra */
-    margin-bottom: 20px; /* Espacio inferior */
-    background: rgba(255, 255, 255, 0.05); /* Fondo sutil para el área de volumen */
-    padding: 10px; /* Espaciado interno */
-    border-radius: 15px; /* Esquinas redondeadas */
-}
-
-.volume-container input {
-    flex: 1; /* La barra ocupa todo el espacio central */
-    cursor: pointer; /* Cursor de selección */
+    0%, 100% { height: 6px; } /* Altura mínima */
+    50% { height: 25px; } /* Altura máxima */
 }
 
 .timer-section {
-    margin-bottom: 25px; /* Separación inferior */
-    font-size: 0.85rem; /* Tamaño de letra informativo */
-    color: #aaa; /* Color gris suave */
+    margin-bottom: 25px; /* Espacio inferior */
+    font-size: 0.85rem; /* Tamaño de letra */
+    color: #aaa; /* Color gris */
 }
 
 .timer-buttons {
-    display: flex; /* Botones en fila */
-    gap: 10px; /* Espacio entre ellos */
-    margin-top: 10px; /* Margen superior */
+    display: flex; /* Botones en línea */
+    gap: 10px; /* Espacio entre botones */
+    margin-top: 10px; /* Espacio superior */
 }
 
 .timer-buttons button {
-    background: rgba(255,255,255,0.1); /* Fondo transparente claro */
-    border: none; /* Sin bordes */
+    background: rgba(255,255,255,0.1); /* Fondo transparente */
+    border: none; /* Sin borde */
     color: white; /* Texto blanco */
-    padding: 10px; /* Tamaño del botón */
+    padding: 10px; /* Tamaño táctil */
     border-radius: 10px; /* Redondeado */
     cursor: pointer; /* Cursor de mano */
-    flex: 1; /* Todos miden lo mismo */
+    flex: 1; /* Ocupan el mismo ancho */
     font-size: 0.75rem; /* Texto pequeño */
-    transition: 0.2s; /* Suavizado al interactuar */
+    transition: 0.2s; /* Suavizado */
 }
 
 .timer-buttons button:active {
-    background: rgba(255,255,255,0.2); /* Oscurece un poco al pulsar */
+    background: rgba(255,255,255,0.2); /* Resalte al pulsar */
 }
 
 #btn-play-pause {
-    background: linear-gradient(135deg, #e94560, #b03045); /* Degradado llamativo */
-    border: none; /* Sin bordes */
-    padding: 20px; /* Botón grande y fácil de pulsar */
+    background: linear-gradient(135deg, #e94560, #b03045); /* Degradado del botón */
+    border: none; /* Sin borde */
+    padding: 20px; /* Tamaño táctil grande */
     color: white; /* Texto blanco */
-    border-radius: 20px; /* Esquinas muy redondeadas */
-    font-weight: bold; /* Texto resaltado */
-    width: 100%; /* Ocupa todo el ancho disponible */
-    font-size: 1.2rem; /* Letra grande */
-    box-shadow: 0 10px 20px rgba(233, 69, 96, 0.3); /* Sombra con el color del botón */
+    border-radius: 20px; /* Muy redondeado */
+    font-weight: bold; /* Negrita */
+    width: 100%; /* Ancho total */
+    font-size: 1.2rem; /* Texto grande */
+    box-shadow: 0 10px 20px rgba(233, 69, 96, 0.3); /* Sombra de color */
     cursor: pointer; /* Cursor de mano */
 }
 
 .search-box input {
     width: 100%; /* Ancho total */
-    padding: 15px; /* Espaciado para escribir cómodamente */
-    border-radius: 15px; /* Redondeado del input */
+    padding: 15px; /* Espaciado interno */
+    border-radius: 15px; /* Redondeado */
     border: 1px solid rgba(255,255,255,0.1); /* Borde sutil */
     background: rgba(0,0,0,0.5); /* Fondo oscuro */
-    color: white; /* Texto blanco al escribir */
-    box-sizing: border-box; /* Padding incluido en el ancho */
-    margin-bottom: 20px; /* Margen inferior */
-    outline: none; /* Quita el resalte azul del navegador */
+    color: white; /* Texto blanco */
+    box-sizing: border-box; /* Padding incluido */
+    margin-bottom: 20px; /* Espacio inferior */
+    outline: none; /* Sin borde de selección */
 }
 
 .station-list {
-    list-style: none; /* Quita los puntos de la lista */
-    padding: 0; /* Sin espacio lateral */
-    max-height: calc(100vh - 220px); /* Altura máxima para permitir scroll */
-    overflow-y: auto; /* Activa el scroll vertical */
+    list-style: none; /* Sin puntos */
+    padding: 0; /* Sin padding */
+    max-height: calc(100vh - 220px); /* Altura dinámica */
+    overflow-y: auto; /* Scroll activado */
 }
 
 .station-item {
-    padding: 18px; /* Espaciado generoso para cada emisora */
-    border-radius: 15px; /* Redondeado de cada fila */
-    margin-bottom: 10px; /* Espacio entre filas */
-    display: flex; /* Alineación horizontal */
-    justify-content: space-between; /* Nombre a un lado, estrella al otro */
-    align-items: center; /* Centrado vertical */
-    background: rgba(255,255,255,0.03); /* Fondo muy sutil */
+    padding: 18px; /* Tamaño táctil grande */
+    border-radius: 15px; /* Redondeado */
+    margin-bottom: 10px; /* Espacio entre items */
+    display: flex; /* Flex horizontal */
+    justify-content: space-between; /* Extremos */
+    align-items: center; /* Alineación vertical */
+    background: rgba(255,255,255,0.03); /* Fondo sutil */
     cursor: pointer; /* Cursor de mano */
-    transition: 0.2s; /* Suavizado general */
+    transition: 0.2s; /* Suavizado */
 }
 
 .station-item.active {
-    background: rgba(233, 69, 96, 0.25); /* Color diferente si está sonando */
-    border-left: 5px solid #e94560; /* Marca lateral de color */
+    background: rgba(233, 69, 96, 0.25); /* Resalte de emisora activa */
+    border-left: 5px solid #e94560; /* Borde de color lateral */
 }
 
 .fav-btn {
     font-size: 1.3rem; /* Tamaño de la estrella */
     filter: grayscale(1); /* Gris por defecto */
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Animación de rebote */
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Animación elástica */
 }
 
 .fav-btn.is-fav {
-    filter: grayscale(0); /* Amarillo brillante si es favorita */
+    filter: grayscale(0); /* Amarillo si es favorita */
 }
