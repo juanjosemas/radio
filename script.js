@@ -9,15 +9,21 @@ const stations = [
     { name: "Funky 80's", url: "https://play.radioking.io/fm80funkymusic/523739" },
     { name: "Deep House", url: "https://hits1deep-audiomediaradio.radioca.st/deep" }, 
     { name: "Lo mejor del Deep House", url: "http://HearMe.fm:8023/stream" } 
-
 ];
 
 // Estado global de la app
 let favorites = JSON.parse(localStorage.getItem('myRadiosFavs')) || [];
 let timerInterval = null;
 let timerSeconds = 0;
+let currentStationData = null; 
+let isUserPaused = true; 
+let wakeLock = null; 
 
-// Referencias a elementos del DOM
+// Variables para el control de "congelación" de la radio
+let lastTimeUpdate = 0;
+let healthCheckInterval = null;
+
+// --- Referencias a elementos del DOM ---
 const audioPlayer = document.getElementById('audio-player');
 const stationList = document.getElementById('station-list');
 const currentStationTitle = document.getElementById('current-station');
@@ -28,12 +34,23 @@ const visualizer = document.getElementById('visualizer');
 const liveBadge = document.getElementById('live-indicator');
 const timerDisplay = document.getElementById('timer-display');
 const clockDisplay = document.getElementById('digital-clock');
+const volumeSlider = document.getElementById('volume-slider');
 
-// Elementos del Menú
 const sidebar = document.getElementById('sidebar');
 const menuToggle = document.getElementById('menu-toggle');
 const closeMenuBtn = document.getElementById('close-menu');
 const overlay = document.getElementById('overlay');
+
+// --- Función Wake Lock (Mantener pantalla despierta si es posible) ---
+async function requestWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+        }
+    } catch (err) {
+        console.log("Wake Lock no disponible");
+    }
+}
 
 // --- Control del Menú Lateral ---
 function openMenu() {
@@ -62,7 +79,6 @@ function updateClock() {
 // --- Gestión de Emisoras ---
 function renderStations(filter = "") {
     stationList.innerHTML = "";
-    
     const sortedStations = [...stations].sort((a, b) => {
         const aFav = favorites.includes(a.name) ? 1 : 0;
         const bFav = favorites.includes(b.name) ? 1 : 0;
@@ -108,6 +124,8 @@ function toggleFavorite(name) {
 }
 
 function playStation(station) {
+    isUserPaused = false; 
+    currentStationData = station;
     statusText.textContent = "Conectando...";
     currentStationTitle.textContent = station.name;
     
@@ -122,7 +140,10 @@ function playStation(station) {
             btnPlayPause.textContent = "Pausa";
             visualizer.style.display = "flex";
             liveBadge.style.display = "block";
+            updateMediaSession(station.name);
             renderStations(searchInput.value);
+            requestWakeLock();
+            startHealthCheck(); // Iniciar vigilancia de señal
         })
         .catch(() => {
             statusText.textContent = "Error de conexión";
@@ -130,6 +151,47 @@ function playStation(station) {
             liveBadge.style.display = "none";
         });
 }
+
+// --- VIGILANCIA DE SEÑAL (Para evitar el corte de los 5 minutos) ---
+function startHealthCheck() {
+    if (healthCheckInterval) clearInterval(healthCheckInterval);
+    
+    healthCheckInterval = setInterval(() => {
+        if (!isUserPaused && audioPlayer.src) {
+            // 1. Comprobar si el tiempo de reproducción se ha detenido
+            if (audioPlayer.currentTime === lastTimeUpdate && !audioPlayer.paused) {
+                console.log("Detectado bloqueo de stream, reconectando...");
+                playStation(currentStationData);
+            }
+            lastTimeUpdate = audioPlayer.currentTime;
+
+            // 2. Hacer un "ping" de red para que el móvil no corte el internet
+            fetch('https://www.google.com/favicon.ico', { mode: 'no-cors', cache: 'no-store' })
+                .catch(() => console.log("Manteniendo red activa..."));
+        }
+    }, 5000); // Comprobar cada 5 segundos
+}
+
+// --- Soporte para Control Multimedia ---
+function updateMediaSession(name) {
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: name,
+            artist: 'Radio Online España',
+            album: 'En Directo',
+            artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/186/186054.png', sizes: '512x512', type: 'image/png' }]
+        });
+        navigator.mediaSession.setActionHandler('play', () => { isUserPaused = false; audioPlayer.play(); });
+        navigator.mediaSession.setActionHandler('pause', () => { isUserPaused = true; audioPlayer.pause(); });
+    }
+}
+
+// Intentar reanudar si el sistema pausa el audio sin permiso
+audioPlayer.addEventListener('pause', () => {
+    if (!isUserPaused && timerSeconds <= 0) {
+        audioPlayer.play().catch(() => console.log("Esperando interacción..."));
+    }
+});
 
 // --- Lógica del Temporizador ---
 function setTimer(minutes) {
@@ -146,11 +208,14 @@ function setTimer(minutes) {
         updateTimerUI();
         if (timerSeconds <= 0) {
             clearInterval(timerInterval);
+            isUserPaused = true; 
             audioPlayer.pause();
             btnPlayPause.textContent = "Reproducir";
             visualizer.style.display = "none";
             liveBadge.style.display = "none";
             timerDisplay.textContent = "⏰ Radio apagada";
+            if (wakeLock) wakeLock.release();
+            if (healthCheckInterval) clearInterval(healthCheckInterval);
         }
     }, 1000);
 }
@@ -161,18 +226,30 @@ function updateTimerUI() {
     timerDisplay.textContent = `Apagado en: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
+// --- Control de Volumen ---
+volumeSlider.oninput = (e) => {
+    audioPlayer.volume = e.target.value;
+};
+
+// --- Control de Botón Play/Pausa ---
 btnPlayPause.onclick = () => {
     if (!audioPlayer.src) return;
     if (audioPlayer.paused) {
+        isUserPaused = false;
         audioPlayer.play();
         btnPlayPause.textContent = "Pausa";
         visualizer.style.display = "flex";
         liveBadge.style.display = "block";
+        requestWakeLock();
+        startHealthCheck();
     } else {
+        isUserPaused = true;
         audioPlayer.pause();
         btnPlayPause.textContent = "Reproducir";
         visualizer.style.display = "none";
         liveBadge.style.display = "none";
+        if (wakeLock) wakeLock.release();
+        if (healthCheckInterval) clearInterval(healthCheckInterval);
     }
 };
 
