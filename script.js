@@ -2,7 +2,7 @@ const stations = [
     { name: "COPE Nacional", url: "https://net1-cope-rrcast.flumotion.com/cope/net1-low.mp3" },
     { name: "Radio Nacional (RNE 1)", url: "https://rtvelivestream.rtve.es/rtvesec/rne/rne_r1_main.m3u8" },
     { name: "Cadena SER", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/CADENASER.mp3" },
-    { name: "O", url: "https://ondacero.es/directo/" },
+    { name: "Onda Cero", url: "https://live-streaming.laradioonline.org:8010/ondaceromadrid.mp3" },
     { name: "Radio Marca", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/RADIOMARCA_NACIONAL.mp3" }, 
     { name: "Los 40 Principales", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/LOS40.mp3" },
     { name: "Funky house", url: "https://stream.technolovers.fm/funky-house" },
@@ -28,6 +28,7 @@ const visualizer = document.getElementById('visualizer');
 const liveBadge = document.getElementById('live-indicator');
 const timerDisplay = document.getElementById('timer-display');
 const clockDisplay = document.getElementById('digital-clock');
+const volumeSlider = document.getElementById('volume-slider');
 
 // Elementos del Menú
 const sidebar = document.getElementById('sidebar');
@@ -107,19 +108,15 @@ function toggleFavorite(name) {
     renderStations(searchInput.value);
 }
 
-// --- Función para evitar el corte en segundo plano ---
+// --- Soporte para Segundo Plano ---
 function updateMediaSession(stationName) {
     if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
             title: stationName,
             artist: "Radio Online",
             album: "En directo",
-            artwork: [
-                { src: 'https://cdn-icons-png.flaticon.com/512/3103/3103181.png', sizes: '512x512', type: 'image/png' }
-            ]
+            artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/3103/3103181.png', sizes: '512x512', type: 'image/png' }]
         });
-
-        // Permitir controlar la radio desde la pantalla de bloqueo
         navigator.mediaSession.setActionHandler('play', () => audioPlayer.play());
         navigator.mediaSession.setActionHandler('pause', () => audioPlayer.pause());
     }
@@ -134,19 +131,20 @@ function playStation(station) {
     audioPlayer.load(); 
     audioPlayer.src = station.url;
     
-    // Configurar la sesión de medios para segundo plano
     updateMediaSession(station.name);
     
     audioPlayer.play()
         .then(() => {
             statusText.textContent = "En directo";
             btnPlayPause.textContent = "Pausa";
+            btnPlayPause.classList.add('playing'); // Activa animación
             visualizer.style.display = "flex";
             liveBadge.style.display = "block";
             renderStations(searchInput.value);
         })
         .catch(() => {
             statusText.textContent = "Error de conexión";
+            btnPlayPause.classList.remove('playing');
             visualizer.style.display = "none";
             liveBadge.style.display = "none";
         });
@@ -169,6 +167,7 @@ function setTimer(minutes) {
             clearInterval(timerInterval);
             audioPlayer.pause();
             btnPlayPause.textContent = "Reproducir";
+            btnPlayPause.classList.remove('playing');
             visualizer.style.display = "none";
             liveBadge.style.display = "none";
             timerDisplay.textContent = "⏰ Radio apagada";
@@ -182,16 +181,21 @@ function updateTimerUI() {
     timerDisplay.textContent = `Apagado en: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
+// Control de Volumen
+volumeSlider.oninput = (e) => {
+    audioPlayer.volume = e.target.value;
+};
+
 btnPlayPause.onclick = () => {
     if (!audioPlayer.src) return;
     if (audioPlayer.paused) {
         audioPlayer.play();
         btnPlayPause.textContent = "Pausa";
-        visualizer.style.display = "flex";
-        liveBadge.style.display = "block";
+        btnPlayPause.classList.add('playing');
     } else {
         audioPlayer.pause();
         btnPlayPause.textContent = "Reproducir";
+        btnPlayPause.classList.remove('playing');
         visualizer.style.display = "none";
         liveBadge.style.display = "none";
     }
