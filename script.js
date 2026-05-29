@@ -2,8 +2,7 @@ const stations = [
     { name: "COPE Nacional", url: "https://net1-cope-rrcast.flumotion.com/cope/net1-low.mp3" },
     { name: "Radio Nacional (RNE 1)", url: "https://rtvelivestream.rtve.es/rtvesec/rne/rne_r1_main.m3u8" },
     { name: "Cadena SER", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/CADENASER.mp3" },
-    { name: "Onda cero", url: "https://ondacero.es/directo/" },
-    
+    { name: "O", url: "https://ondacero.es/directo/" },
     { name: "Radio Marca", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/RADIOMARCA_NACIONAL.mp3" }, 
     { name: "Los 40 Principales", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/LOS40.mp3" },
     { name: "Funky house", url: "https://stream.technolovers.fm/funky-house" },
@@ -11,7 +10,6 @@ const stations = [
     { name: "Funky 80's", url: "https://play.radioking.io/fm80funkymusic/523739" },
     { name: "Deep House", url: "https://hits1deep-audiomediaradio.radioca.st/deep" }, 
     { name: "Lo mejor del Deep House", url: "http://HearMe.fm:8023/stream" } 
-
 ];
 
 // Estado global de la app
@@ -109,6 +107,24 @@ function toggleFavorite(name) {
     renderStations(searchInput.value);
 }
 
+// --- Función para evitar el corte en segundo plano ---
+function updateMediaSession(stationName) {
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: stationName,
+            artist: "Radio Online",
+            album: "En directo",
+            artwork: [
+                { src: 'https://cdn-icons-png.flaticon.com/512/3103/3103181.png', sizes: '512x512', type: 'image/png' }
+            ]
+        });
+
+        // Permitir controlar la radio desde la pantalla de bloqueo
+        navigator.mediaSession.setActionHandler('play', () => audioPlayer.play());
+        navigator.mediaSession.setActionHandler('pause', () => audioPlayer.pause());
+    }
+}
+
 function playStation(station) {
     statusText.textContent = "Conectando...";
     currentStationTitle.textContent = station.name;
@@ -117,6 +133,9 @@ function playStation(station) {
     audioPlayer.src = ""; 
     audioPlayer.load(); 
     audioPlayer.src = station.url;
+    
+    // Configurar la sesión de medios para segundo plano
+    updateMediaSession(station.name);
     
     audioPlayer.play()
         .then(() => {
