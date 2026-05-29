@@ -9,7 +9,7 @@ const stations = [
     { name: "Funky disco", url: "https://funky-disco-hits.stream.laut.fm/funky-disco-hits" },
     { name: "Funky 80's", url: "https://play.radioking.io/fm80funkymusic/523739" },
     { name: "Deep House", url: "https://hits1deep-audiomediaradio.radioca.st/deep" }, 
-    { name: "Lo mejor del Deep House", url: "http://HearMe.fm:8023/stream" } 
+    { name: "Soulful House", url: "https://radio4.vip-radios.fm:18057/stream-128kmp3-SoulfulHouse" } 
 ];
 
 // Estado global de la app
