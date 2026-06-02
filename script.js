@@ -12,13 +12,12 @@ const stations = [
     { name: "Soulful House", url: "https://radio4.vip-radios.fm:18057/stream-128kmp3-SoulfulHouse" } 
 ];
 
-// --- Registro de Service Worker CORREGIDO ---
+// --- Registro de Service Worker ---
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        // Ahora apuntamos al archivo físico sw.js para que Android no dé error de protocolo
         navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log("Service Worker registrado con éxito", reg))
-            .catch(err => console.log("Error al registrar el SW", err));
+            .then(reg => console.log("Service Worker registrado", reg))
+            .catch(err => console.log("Error SW", err));
     });
 }
 
@@ -30,6 +29,7 @@ let isPlayingManually = false;
 let lastPlayPos = 0; 
 let wakeLock = null; 
 let heartbeatInterval = null; 
+let silentOscillator = null; // Para el tono inaudible
 
 // --- Variables para el Visualizador Real ---
 let audioCtx = null;
@@ -56,7 +56,7 @@ const menuToggle = document.getElementById('menu-toggle');
 const closeMenuBtn = document.getElementById('close-menu');
 const overlay = document.getElementById('overlay');
 
-// --- Inicialización Audio ---
+// --- Inicialización Audio y TRUCO DEL TONO INAUDIBLE ---
 function initAudioContext() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -65,8 +65,33 @@ function initAudioContext() {
         source.connect(analyser);
         analyser.connect(audioCtx.destination);
         analyser.fftSize = 64; 
-        const bufferLength = analyser.frequencyBinCount;
-        dataArray = new Uint8Array(bufferLength);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+    }
+}
+
+// Esta función crea un tono de 20kHz (inaudible para adultos) que mantiene el hardware activo
+function startSilentTone() {
+    if (audioCtx && !silentOscillator) {
+        const gainNode = audioCtx.createGain();
+        silentOscillator = audioCtx.createOscillator();
+        
+        silentOscillator.type = 'sine';
+        silentOscillator.frequency.setValueAtTime(20000, audioCtx.currentTime); // Frecuencia inaudible
+        
+        gainNode.gain.setValueAtTime(0.01, audioCtx.currentTime); // Volumen casi a cero
+        
+        silentOscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        silentOscillator.start();
+        console.log("Tono inaudible activado para prevenir suspensión de Android");
+    }
+}
+
+function stopSilentTone() {
+    if (silentOscillator) {
+        silentOscillator.stop();
+        silentOscillator = null;
     }
 }
 
@@ -181,9 +206,10 @@ function startHeartbeat() {
     if (heartbeatInterval) clearInterval(heartbeatInterval);
     heartbeatInterval = setInterval(() => {
         if (isPlayingManually) {
+            // Petición mínima para mantener el Wi-Fi/Datos despiertos
             fetch('https://www.google.com', { mode: 'no-cors' }).catch(() => {});
         }
-    }, 25000); 
+    }, 20000); // Bajamos a 20 segundos para mayor persistencia
 }
 
 function stopHeartbeat() {
@@ -215,14 +241,19 @@ setInterval(() => {
 function playStation(station) {
     initAudioContext(); 
     if (audioCtx.state === 'suspended') audioCtx.resume();
+    
     statusText.textContent = "Conectando...";
     currentStationTitle.textContent = station.name;
     isPlayingManually = true;
+    
     audioPlayer.pause();
     audioPlayer.src = station.url;
+    
     updateMediaSession(station.name);
     requestWakeLock();
     startHeartbeat();
+    startSilentTone(); // ACTIVAMOS EL TONO ANTI-SUSPENSIÓN
+    
     audioPlayer.play()
         .then(() => {
             statusText.textContent = "En directo";
@@ -270,6 +301,7 @@ function stopPlayback() {
     if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
     releaseWakeLock();
     stopHeartbeat();
+    stopSilentTone(); // DETENEMOS EL TONO ANTI-SUSPENSIÓN
 }
 
 // --- Controles ---
@@ -283,6 +315,7 @@ btnPlayPause.onclick = () => {
         isPlayingManually = true;
         requestWakeLock();
         startHeartbeat();
+        startSilentTone(); // ACTIVAMOS EL TONO ANTI-SUSPENSIÓN
         audioPlayer.play();
         btnPlayPause.textContent = "Pausa";
         btnPlayPause.classList.add('playing');
