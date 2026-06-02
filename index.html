@@ -86,6 +86,11 @@
 
         <!-- Etiqueta de audio invisible -->
         <audio id="audio-player" playsinline webkit-playsinline preload="auto" crossorigin="anonymous"></audio>
+
+        <!-- TRUCO FINAL: Vídeo invisible para mantener el sistema despierto -->
+        <video id="keep-alive-video" playsinline muted loop style="position:fixed; top:0; left:0; width:1px; height:1px; opacity:0.01; pointer-events:none;">
+            <source src="https://raw.githubusercontent.com/anars/blank-audio/master/250-milliseconds-of-silence.mp3" type="audio/mp3">
+        </video>
         
         <!-- Botón principal de control -->
         <div class="controls">

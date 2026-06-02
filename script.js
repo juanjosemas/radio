@@ -15,9 +15,7 @@ const stations = [
 // --- Registro de Service Worker ---
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log("Service Worker registrado", reg))
-            .catch(err => console.log("Error SW", err));
+        navigator.serviceWorker.register('sw.js').catch(err => console.log("SW Error", err));
     });
 }
 
@@ -29,9 +27,9 @@ let isPlayingManually = false;
 let lastPlayPos = 0; 
 let wakeLock = null; 
 let heartbeatInterval = null; 
-let silentOscillator = null; // Para el tono inaudible
+let silentOscillator = null; 
 
-// --- Variables para el Visualizador Real ---
+// --- Variables Audio Context ---
 let audioCtx = null;
 let analyser = null;
 let source = null;
@@ -40,6 +38,7 @@ let animationId = null;
 
 // --- Referencias DOM ---
 const audioPlayer = document.getElementById('audio-player');
+const keepAliveVideo = document.getElementById('keep-alive-video'); 
 const stationList = document.getElementById('station-list');
 const currentStationTitle = document.getElementById('current-station');
 const statusText = document.getElementById('status');
@@ -56,7 +55,18 @@ const menuToggle = document.getElementById('menu-toggle');
 const closeMenuBtn = document.getElementById('close-menu');
 const overlay = document.getElementById('overlay');
 
-// --- Inicialización Audio y TRUCO DEL TONO INAUDIBLE ---
+// --- Funciones de Menú (Corregido el error de referencia) ---
+function openMenu() {
+    sidebar.classList.add('open');
+    overlay.classList.add('active');
+}
+
+function closeMenu() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+}
+
+// --- Inicialización Audio ---
 function initAudioContext() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -69,22 +79,17 @@ function initAudioContext() {
     }
 }
 
-// Esta función crea un tono de 20kHz (inaudible para adultos) que mantiene el hardware activo
+// Tono inaudible para forzar actividad del hardware
 function startSilentTone() {
     if (audioCtx && !silentOscillator) {
         const gainNode = audioCtx.createGain();
         silentOscillator = audioCtx.createOscillator();
-        
         silentOscillator.type = 'sine';
-        silentOscillator.frequency.setValueAtTime(20000, audioCtx.currentTime); // Frecuencia inaudible
-        
-        gainNode.gain.setValueAtTime(0.01, audioCtx.currentTime); // Volumen casi a cero
-        
+        silentOscillator.frequency.setValueAtTime(19000, audioCtx.currentTime); 
+        gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime); 
         silentOscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
-        
         silentOscillator.start();
-        console.log("Tono inaudible activado para prevenir suspensión de Android");
     }
 }
 
@@ -112,19 +117,6 @@ function animateVisualizer() {
     });
 }
 
-// --- Menú ---
-function openMenu() {
-    sidebar.classList.add('open');
-    overlay.classList.add('active');
-}
-function closeMenu() {
-    sidebar.classList.remove('open');
-    overlay.classList.remove('active');
-}
-menuToggle.onclick = openMenu;
-closeMenuBtn.onclick = closeMenu;
-overlay.onclick = closeMenu;
-
 // --- Reloj ---
 function updateClock() {
     const now = new Date();
@@ -134,21 +126,37 @@ function updateClock() {
     clockDisplay.textContent = `${h}:${m}:${s}`;
 }
 
-// --- Wake Lock ---
+// --- Wake Lock (Mantiene CPU despierta) ---
 async function requestWakeLock() {
     if ('wakeLock' in navigator) {
         try {
             wakeLock = await navigator.wakeLock.request('screen');
         } catch (err) {
-            console.error(`Error con Wake Lock: ${err.name}`);
+            console.error("WakeLock failed", err);
         }
     }
 }
+
 function releaseWakeLock() {
     if (wakeLock !== null) {
         wakeLock.release();
         wakeLock = null;
     }
+}
+
+// --- Latido de Red Agresivo ---
+function startHeartbeat() {
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
+    heartbeatInterval = setInterval(() => {
+        if (isPlayingManually) {
+            fetch(`https://www.google.com/favicon.ico?t=${Date.now()}`, { mode: 'no-cors' }).catch(() => {});
+        }
+    }, 15000); 
+}
+
+function stopHeartbeat() {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
 }
 
 // --- Emisoras ---
@@ -196,47 +204,9 @@ function updateMediaSession(stationName) {
         });
         navigator.mediaSession.setActionHandler('play', () => { audioPlayer.play(); });
         navigator.mediaSession.setActionHandler('pause', () => { stopPlayback(); });
-        navigator.mediaSession.setActionHandler('stop', () => { stopPlayback(); });
         navigator.mediaSession.playbackState = "playing";
     }
 }
-
-// --- Latido de Red ---
-function startHeartbeat() {
-    if (heartbeatInterval) clearInterval(heartbeatInterval);
-    heartbeatInterval = setInterval(() => {
-        if (isPlayingManually) {
-            // Petición mínima para mantener el Wi-Fi/Datos despiertos
-            fetch('https://www.google.com', { mode: 'no-cors' }).catch(() => {});
-        }
-    }, 20000); // Bajamos a 20 segundos para mayor persistencia
-}
-
-function stopHeartbeat() {
-    clearInterval(heartbeatInterval);
-    heartbeatInterval = null;
-}
-
-// --- Re-conexión ---
-function forceReconnection() {
-    if (isPlayingManually) {
-        const currentUrl = audioPlayer.src;
-        audioPlayer.pause();
-        audioPlayer.src = ""; 
-        audioPlayer.load(); 
-        audioPlayer.src = currentUrl;
-        audioPlayer.play().catch(e => console.error(e));
-    }
-}
-
-setInterval(() => {
-    if (isPlayingManually) {
-        if (audioPlayer.currentTime === lastPlayPos && !audioPlayer.paused) {
-            forceReconnection();
-        }
-        lastPlayPos = audioPlayer.currentTime;
-    }
-}, 8000);
 
 function playStation(station) {
     initAudioContext(); 
@@ -252,7 +222,11 @@ function playStation(station) {
     updateMediaSession(station.name);
     requestWakeLock();
     startHeartbeat();
-    startSilentTone(); // ACTIVAMOS EL TONO ANTI-SUSPENSIÓN
+    startSilentTone();
+    
+    if (keepAliveVideo) {
+        keepAliveVideo.play().catch(() => console.log("Video block"));
+    }
     
     audioPlayer.play()
         .then(() => {
@@ -267,6 +241,20 @@ function playStation(station) {
         .catch(() => {
             statusText.textContent = "Error de conexión";
         });
+}
+
+function stopPlayback() {
+    isPlayingManually = false;
+    audioPlayer.pause();
+    if (keepAliveVideo) keepAliveVideo.pause();
+    btnPlayPause.textContent = "Reproducir";
+    btnPlayPause.classList.remove('playing');
+    visualizer.style.display = "none";
+    liveBadge.style.display = "none";
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
+    releaseWakeLock();
+    stopHeartbeat();
+    stopSilentTone();
 }
 
 // --- Temporizador ---
@@ -291,20 +279,11 @@ function setTimer(minutes) {
     }, 1000);
 }
 
-function stopPlayback() {
-    isPlayingManually = false;
-    audioPlayer.pause();
-    btnPlayPause.textContent = "Reproducir";
-    btnPlayPause.classList.remove('playing');
-    visualizer.style.display = "none";
-    liveBadge.style.display = "none";
-    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
-    releaseWakeLock();
-    stopHeartbeat();
-    stopSilentTone(); // DETENEMOS EL TONO ANTI-SUSPENSIÓN
-}
+// --- Controles y Eventos ---
+menuToggle.onclick = openMenu;
+closeMenuBtn.onclick = closeMenu;
+overlay.onclick = closeMenu;
 
-// --- Controles ---
 volumeSlider.oninput = (e) => { audioPlayer.volume = e.target.value; };
 
 btnPlayPause.onclick = () => {
@@ -315,7 +294,8 @@ btnPlayPause.onclick = () => {
         isPlayingManually = true;
         requestWakeLock();
         startHeartbeat();
-        startSilentTone(); // ACTIVAMOS EL TONO ANTI-SUSPENSIÓN
+        startSilentTone();
+        if (keepAliveVideo) keepAliveVideo.play();
         audioPlayer.play();
         btnPlayPause.textContent = "Pausa";
         btnPlayPause.classList.add('playing');
