@@ -55,7 +55,7 @@ const menuToggle = document.getElementById('menu-toggle');
 const closeMenuBtn = document.getElementById('close-menu');
 const overlay = document.getElementById('overlay');
 
-// --- Funciones de Menú (Corregido el error de referencia) ---
+// --- Funciones de Menú ---
 function openMenu() {
     sidebar.classList.add('open');
     overlay.classList.add('active');
@@ -71,22 +71,25 @@ function initAudioContext() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioCtx.createAnalyser();
+        // Usamos una ganancia para asegurar que el contexto no se duerma
+        const masterGain = audioCtx.createGain();
         source = audioCtx.createMediaElementSource(audioPlayer);
         source.connect(analyser);
-        analyser.connect(audioCtx.destination);
+        analyser.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
         analyser.fftSize = 64; 
         dataArray = new Uint8Array(analyser.frequencyBinCount);
     }
 }
 
-// Tono inaudible para forzar actividad del hardware
+// Tono inaudible para forzar actividad del hardware (oscilador continuo)
 function startSilentTone() {
     if (audioCtx && !silentOscillator) {
         const gainNode = audioCtx.createGain();
         silentOscillator = audioCtx.createOscillator();
         silentOscillator.type = 'sine';
-        silentOscillator.frequency.setValueAtTime(19000, audioCtx.currentTime); 
-        gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime); 
+        silentOscillator.frequency.setValueAtTime(21000, audioCtx.currentTime); // Más alto aún
+        gainNode.gain.setValueAtTime(0.0001, audioCtx.currentTime); 
         silentOscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
         silentOscillator.start();
@@ -95,7 +98,7 @@ function startSilentTone() {
 
 function stopSilentTone() {
     if (silentOscillator) {
-        silentOscillator.stop();
+        try { silentOscillator.stop(); } catch(e){}
         silentOscillator = null;
     }
 }
@@ -126,13 +129,13 @@ function updateClock() {
     clockDisplay.textContent = `${h}:${m}:${s}`;
 }
 
-// --- Wake Lock (Mantiene CPU despierta) ---
+// --- Wake Lock ---
 async function requestWakeLock() {
     if ('wakeLock' in navigator) {
         try {
             wakeLock = await navigator.wakeLock.request('screen');
         } catch (err) {
-            console.error("WakeLock failed", err);
+            console.log("WakeLock no disponible");
         }
     }
 }
@@ -144,14 +147,16 @@ function releaseWakeLock() {
     }
 }
 
-// --- Latido de Red Agresivo ---
+// --- Latido de Red Constante ---
 function startHeartbeat() {
     if (heartbeatInterval) clearInterval(heartbeatInterval);
     heartbeatInterval = setInterval(() => {
         if (isPlayingManually) {
-            fetch(`https://www.google.com/favicon.ico?t=${Date.now()}`, { mode: 'no-cors' }).catch(() => {});
+            // Petición a un recurso real externo para mantener viva la radiofrecuencia
+            const img = new Image();
+            img.src = "https://www.google.com/favicon.ico?p=" + Math.random();
         }
-    }, 15000); 
+    }, 10000); // Cada 10 segundos para máxima agresividad
 }
 
 function stopHeartbeat() {
@@ -194,7 +199,7 @@ function toggleFavorite(name) {
     renderStations(searchInput.value);
 }
 
-// --- MediaSession ---
+// --- MediaSession (Clave para Android) ---
 function updateMediaSession(stationName) {
     if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
@@ -202,11 +207,36 @@ function updateMediaSession(stationName) {
             artist: "Radio Online - En Directo",
             artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/3103/3103181.png', sizes: '512x512', type: 'image/png' }]
         });
-        navigator.mediaSession.setActionHandler('play', () => { audioPlayer.play(); });
-        navigator.mediaSession.setActionHandler('pause', () => { stopPlayback(); });
+        
+        // Handlers obligatorios para que Android no cierre la sesión
+        const actionHandlers = [
+            ['play', () => audioPlayer.play()],
+            ['pause', () => stopPlayback()],
+            ['stop', () => stopPlayback()]
+        ];
+
+        for (const [action, handler] of actionHandlers) {
+            try {
+                navigator.mediaSession.setActionHandler(action, handler);
+            } catch (error) {
+                console.log(`Error handler ${action}`);
+            }
+        }
         navigator.mediaSession.playbackState = "playing";
     }
 }
+
+// --- Gestión de errores y reconexión ---
+audioPlayer.onerror = () => {
+    if (isPlayingManually) {
+        console.log("Error detectado, reintentando...");
+        setTimeout(() => {
+            const currentUrl = audioPlayer.src;
+            audioPlayer.load();
+            audioPlayer.play();
+        }, 1000);
+    }
+};
 
 function playStation(station) {
     initAudioContext(); 
@@ -218,6 +248,7 @@ function playStation(station) {
     
     audioPlayer.pause();
     audioPlayer.src = station.url;
+    audioPlayer.load(); // Forzamos carga limpia
     
     updateMediaSession(station.name);
     requestWakeLock();
@@ -225,7 +256,7 @@ function playStation(station) {
     startSilentTone();
     
     if (keepAliveVideo) {
-        keepAliveVideo.play().catch(() => console.log("Video block"));
+        keepAliveVideo.play().catch(() => {});
     }
     
     audioPlayer.play()
@@ -238,8 +269,9 @@ function playStation(station) {
             animateVisualizer(); 
             renderStations(searchInput.value);
         })
-        .catch(() => {
+        .catch((e) => {
             statusText.textContent = "Error de conexión";
+            console.log(e);
         });
 }
 
@@ -279,11 +311,10 @@ function setTimer(minutes) {
     }, 1000);
 }
 
-// --- Controles y Eventos ---
+// --- Eventos finales ---
 menuToggle.onclick = openMenu;
 closeMenuBtn.onclick = closeMenu;
 overlay.onclick = closeMenu;
-
 volumeSlider.oninput = (e) => { audioPlayer.volume = e.target.value; };
 
 btnPlayPause.onclick = () => {
