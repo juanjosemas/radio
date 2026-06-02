@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Radio Pro - España</title>
-    <!-- Enlace al manifiesto para evitar que Android cierre la app -->
+    <!-- Enlace al manifiesto para identificar la App -->
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
     <!-- Importación de las Google Fonts elegidas -->
@@ -63,6 +63,8 @@
             </div>
             <p id="status">Selecciona una emisora</p>
             <h2 id="current-station">-</h2>
+            <!-- Nuevo elemento para mostrar canción o programa -->
+            <p id="track-info" class="track-info"></p>
             <p id="timer-display" class="timer-display"></p>
         </div>
 
@@ -86,11 +88,6 @@
 
         <!-- Etiqueta de audio invisible -->
         <audio id="audio-player" playsinline webkit-playsinline preload="auto" crossorigin="anonymous"></audio>
-
-        <!-- TRUCO FINAL: Vídeo invisible para mantener el sistema despierto -->
-        <video id="keep-alive-video" playsinline muted loop style="position:fixed; top:0; left:0; width:1px; height:1px; opacity:0.01; pointer-events:none;">
-            <source src="https://raw.githubusercontent.com/anars/blank-audio/master/250-milliseconds-of-silence.mp3" type="audio/mp3">
-        </video>
         
         <!-- Botón principal de control -->
         <div class="controls">

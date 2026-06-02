@@ -1,53 +1,43 @@
 const stations = [
-    { name: "COPE Nacional", url: "https://net1-cope-rrcast.flumotion.com/cope/net1-low.mp3" },
-    { name: "Radio Nacional (RNE 1)", url: "https://rtvelivestream.rtve.es/rtvesec/rne/rne_r1_main.m3u8" },
-    { name: "Cadena SER", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/CADENASER.mp3" },
-    { name: "Radio Marca", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/RADIOMARCA_NACIONAL.mp3" }, 
-    { name: "Los 40 Principales", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/LOS40.mp3" },
-    { name: "Funky house", url: "https://stream.technolovers.fm/funky-house" },
-    { name: "Funky disco", url: "https://funky-disco-hits.stream.laut.fm/funky-disco-hits" },
-    { name: "Funky 80's", url: "https://play.radioking.io/fm80funkymusic/523739" },
-    { name: "Deep House", url: "https://hits1deep-audiomediaradio.radioca.st/deep" }, 
-    { name: "181.FM Soul", url: "https://listen.181fm.com/181-soul_128k.mp3" },
-    { name: "Soulful House", url: "https://radio4.vip-radios.fm:18057/stream-128kmp3-SoulfulHouse" } 
+    { name: "COPE Nacional", url: "https://net1-cope-rrcast.flumotion.com/cope/net1-low.mp3", desc: "Noticias y Deportes" },
+    { name: "Radio Nacional (RNE 1)", url: "https://rtvelivestream.rtve.es/rtvesec/rne/rne_r1_main.m3u8", desc: "Radio Pública" },
+    { name: "Cadena SER", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/CADENASER.mp3", desc: "Actualidad y Entretenimiento" },
+    { name: "Radio Marca", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/RADIOMARCA_NACIONAL.mp3", desc: "El Deporte que se Vive" }, 
+    { name: "Los 40 Principales", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/LOS40.mp3", desc: "Éxitos del Momento" },
+    { name: "Funky house", url: "https://stream.technolovers.fm/funky-house", desc: "Lo mejor del Funky House" },
+    { name: "Funky disco", url: "https://funky-disco-hits.stream.laut.fm/funky-disco-hits", desc: "Disco y Funk clásico" },
+    { name: "Funky 80's", url: "https://play.radioking.io/fm80funkymusic/523739", desc: "Clásicos de los 80" },
+    { name: "Deep House", url: "https://hits1deep-audiomediaradio.radioca.st/deep", desc: "Sonido Deep Relax" }, 
+    { name: "181.FM Soul", url: "https://listen.181fm.com/181-soul_128k.mp3", desc: "R&B y Soul" },
+    { name: "Soulful House", url: "https://radio4.vip-radios.fm:18057/stream-128kmp3-SoulfulHouse", desc: "House con Alma" }, 
+    { name: "Deep Radio", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/DEEP_RADIO.mp3", desc: "Deep & Chill" }, 
+    { name: "Nostalgie Funky", url: "https://streaming.nrjaudio.fm/ou7x6kf3s5gi", desc: "Grandes Clásicos Funk" }
 ];
-
-// --- Registro de Service Worker ---
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(err => console.log("SW Error", err));
-    });
-}
 
 // --- Estado global ---
 let favorites = JSON.parse(localStorage.getItem('myRadiosFavs')) || [];
 let timerInterval = null;
 let timerSeconds = 0;
 let isPlayingManually = false; 
-let lastPlayPos = 0; 
-let wakeLock = null; 
-let heartbeatInterval = null; 
-let silentOscillator = null; 
 
-// --- Variables Audio Context ---
+// --- Audio Context (Calidad Pro) ---
 let audioCtx = null;
 let analyser = null;
 let source = null;
+let masterGain = null; 
 let dataArray = null;
 let animationId = null;
 
 // --- Referencias DOM ---
 const audioPlayer = document.getElementById('audio-player');
-const keepAliveVideo = document.getElementById('keep-alive-video'); 
-const stationList = document.getElementById('station-list');
 const currentStationTitle = document.getElementById('current-station');
+const trackInfoDisplay = document.getElementById('track-info'); 
 const statusText = document.getElementById('status');
 const btnPlayPause = document.getElementById('btn-play-pause');
 const searchInput = document.getElementById('search-input');
 const visualizer = document.getElementById('visualizer');
 const bars = document.querySelectorAll('.bar'); 
 const liveBadge = document.getElementById('live-indicator');
-const timerDisplay = document.getElementById('timer-display');
 const clockDisplay = document.getElementById('digital-clock');
 const volumeSlider = document.getElementById('volume-slider');
 const sidebar = document.getElementById('sidebar');
@@ -55,12 +45,11 @@ const menuToggle = document.getElementById('menu-toggle');
 const closeMenuBtn = document.getElementById('close-menu');
 const overlay = document.getElementById('overlay');
 
-// --- Funciones de Menú ---
+// --- Funciones Menú ---
 function openMenu() {
     sidebar.classList.add('open');
     overlay.classList.add('active');
 }
-
 function closeMenu() {
     sidebar.classList.remove('open');
     overlay.classList.remove('active');
@@ -71,35 +60,16 @@ function initAudioContext() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioCtx.createAnalyser();
-        // Usamos una ganancia para asegurar que el contexto no se duerma
-        const masterGain = audioCtx.createGain();
+        masterGain = audioCtx.createGain();
         source = audioCtx.createMediaElementSource(audioPlayer);
+        
         source.connect(analyser);
         analyser.connect(masterGain);
         masterGain.connect(audioCtx.destination);
+        
+        masterGain.gain.value = 1.0; 
         analyser.fftSize = 64; 
         dataArray = new Uint8Array(analyser.frequencyBinCount);
-    }
-}
-
-// Tono inaudible para forzar actividad del hardware (oscilador continuo)
-function startSilentTone() {
-    if (audioCtx && !silentOscillator) {
-        const gainNode = audioCtx.createGain();
-        silentOscillator = audioCtx.createOscillator();
-        silentOscillator.type = 'sine';
-        silentOscillator.frequency.setValueAtTime(21000, audioCtx.currentTime); // Más alto aún
-        gainNode.gain.setValueAtTime(0.0001, audioCtx.currentTime); 
-        silentOscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        silentOscillator.start();
-    }
-}
-
-function stopSilentTone() {
-    if (silentOscillator) {
-        try { silentOscillator.stop(); } catch(e){}
-        silentOscillator = null;
     }
 }
 
@@ -120,123 +90,51 @@ function animateVisualizer() {
     });
 }
 
-// --- Reloj ---
+// --- Reloj Digital ---
 function updateClock() {
     const now = new Date();
-    const h = String(now.getHours()).padStart(2, '0');
-    const m = String(now.getMinutes()).padStart(2, '0');
-    const s = String(now.getSeconds()).padStart(2, '0');
-    clockDisplay.textContent = `${h}:${m}:${s}`;
+    clockDisplay.textContent = now.toLocaleTimeString('es-ES', { hour12: false });
 }
 
-// --- Wake Lock ---
-async function requestWakeLock() {
-    if ('wakeLock' in navigator) {
-        try {
-            wakeLock = await navigator.wakeLock.request('screen');
-        } catch (err) {
-            console.log("WakeLock no disponible");
-        }
-    }
-}
-
-function releaseWakeLock() {
-    if (wakeLock !== null) {
-        wakeLock.release();
-        wakeLock = null;
-    }
-}
-
-// --- Latido de Red Constante ---
-function startHeartbeat() {
-    if (heartbeatInterval) clearInterval(heartbeatInterval);
-    heartbeatInterval = setInterval(() => {
-        if (isPlayingManually) {
-            // Petición a un recurso real externo para mantener viva la radiofrecuencia
-            const img = new Image();
-            img.src = "https://www.google.com/favicon.ico?p=" + Math.random();
-        }
-    }, 10000); // Cada 10 segundos para máxima agresividad
-}
-
-function stopHeartbeat() {
-    clearInterval(heartbeatInterval);
-    heartbeatInterval = null;
-}
-
-// --- Emisoras ---
+// --- Gestión de Emisoras ---
 function renderStations(filter = "") {
+    const stationList = document.getElementById('station-list');
     stationList.innerHTML = "";
-    const sortedStations = [...stations].sort((a, b) => {
-        const aFav = favorites.includes(a.name) ? 1 : 0;
-        const bFav = favorites.includes(b.name) ? 1 : 0;
-        return bFav - aFav;
-    });
-    const filtered = sortedStations.filter(s => s.name.toLowerCase().includes(filter.toLowerCase()));
-    filtered.forEach(station => {
+    const sorted = [...stations].sort((a, b) => (favorites.includes(b.name) - favorites.includes(a.name)));
+    
+    sorted.filter(s => s.name.toLowerCase().includes(filter.toLowerCase())).forEach(station => {
         const li = document.createElement('li');
         li.className = `station-item ${currentStationTitle.textContent === station.name ? 'active' : ''}`;
         li.onclick = () => { playStation(station); closeMenu(); };
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = station.name;
-        const favBtn = document.createElement('span');
-        favBtn.className = `fav-btn ${favorites.includes(station.name) ? 'is-fav' : ''}`;
-        favBtn.textContent = "⭐";
-        favBtn.onclick = (e) => { e.stopPropagation(); toggleFavorite(station.name); };
-        li.appendChild(nameSpan);
-        li.appendChild(favBtn);
+        
+        li.innerHTML = `
+            <span>${station.name}</span>
+            <span class="fav-btn ${favorites.includes(station.name) ? 'is-fav' : ''}" 
+                  onclick="event.stopPropagation(); toggleFavorite('${station.name}')">⭐</span>
+        `;
         stationList.appendChild(li);
     });
 }
 
 function toggleFavorite(name) {
-    if (favorites.includes(name)) {
-        favorites = favorites.filter(f => f !== name);
-    } else {
-        favorites.push(name);
-    }
+    favorites = favorites.includes(name) ? favorites.filter(f => f !== name) : [...favorites, name];
     localStorage.setItem('myRadiosFavs', JSON.stringify(favorites));
     renderStations(searchInput.value);
 }
 
-// --- MediaSession (Clave para Android) ---
-function updateMediaSession(stationName) {
-    if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-            title: stationName,
-            artist: "Radio Online - En Directo",
-            artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/3103/3103181.png', sizes: '512x512', type: 'image/png' }]
-        });
-        
-        // Handlers obligatorios para que Android no cierre la sesión
-        const actionHandlers = [
-            ['play', () => audioPlayer.play()],
-            ['pause', () => stopPlayback()],
-            ['stop', () => stopPlayback()]
-        ];
-
-        for (const [action, handler] of actionHandlers) {
-            try {
-                navigator.mediaSession.setActionHandler(action, handler);
-            } catch (error) {
-                console.log(`Error handler ${action}`);
-            }
+// Función para actualizar la info del track (Simulada/Best-effort)
+function updateTrackInfo(station) {
+    trackInfoDisplay.textContent = "Sintonizando...";
+    
+    // Como los navegadores bloquean metadatos ICY por CORS, 
+    // usamos la descripción predefinida como fallback tras 3 segundos
+    setTimeout(() => {
+        if (isPlayingManually) {
+            // Si la emisora tiene una descripción propia, la usamos
+            trackInfoDisplay.textContent = station.desc || "Emisión en directo";
         }
-        navigator.mediaSession.playbackState = "playing";
-    }
+    }, 4000);
 }
-
-// --- Gestión de errores y reconexión ---
-audioPlayer.onerror = () => {
-    if (isPlayingManually) {
-        console.log("Error detectado, reintentando...");
-        setTimeout(() => {
-            const currentUrl = audioPlayer.src;
-            audioPlayer.load();
-            audioPlayer.play();
-        }, 1000);
-    }
-};
 
 function playStation(station) {
     initAudioContext(); 
@@ -246,72 +144,60 @@ function playStation(station) {
     currentStationTitle.textContent = station.name;
     isPlayingManually = true;
     
-    audioPlayer.pause();
+    // Intentamos cargar la info de la canción
+    updateTrackInfo(station);
+    
     audioPlayer.src = station.url;
-    audioPlayer.load(); // Forzamos carga limpia
-    
-    updateMediaSession(station.name);
-    requestWakeLock();
-    startHeartbeat();
-    startSilentTone();
-    
-    if (keepAliveVideo) {
-        keepAliveVideo.play().catch(() => {});
-    }
-    
     audioPlayer.play()
         .then(() => {
             statusText.textContent = "En directo";
             btnPlayPause.textContent = "Pausa";
-            btnPlayPause.classList.add('playing');
             visualizer.style.display = "flex";
             liveBadge.style.display = "block";
             animateVisualizer(); 
             renderStations(searchInput.value);
+            
+            // Actualizamos la MediaSession (lo que sale en la pantalla de bloqueo del móvil)
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: station.name,
+                    artist: station.desc || "Radio Online",
+                    album: "En directo",
+                    artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/3103/3103181.png', sizes: '512x512', type: 'image/png' }]
+                });
+            }
         })
-        .catch((e) => {
+        .catch(() => {
             statusText.textContent = "Error de conexión";
-            console.log(e);
+            trackInfoDisplay.textContent = "";
         });
 }
 
 function stopPlayback() {
     isPlayingManually = false;
     audioPlayer.pause();
-    if (keepAliveVideo) keepAliveVideo.pause();
     btnPlayPause.textContent = "Reproducir";
-    btnPlayPause.classList.remove('playing');
     visualizer.style.display = "none";
     liveBadge.style.display = "none";
-    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
-    releaseWakeLock();
-    stopHeartbeat();
-    stopSilentTone();
+    trackInfoDisplay.textContent = "";
 }
 
 // --- Temporizador ---
 function setTimer(minutes) {
     clearInterval(timerInterval);
-    if (minutes === 0) {
-        timerSeconds = 0;
-        timerDisplay.textContent = "";
-        return;
-    }
+    const timerDisplay = document.getElementById('timer-display');
+    if (minutes === 0) { timerDisplay.textContent = ""; return; }
     timerSeconds = minutes * 60;
     timerInterval = setInterval(() => {
         timerSeconds--;
         const mins = Math.floor(timerSeconds / 60);
         const secs = timerSeconds % 60;
         timerDisplay.textContent = `Apagado en: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        if (timerSeconds <= 0) {
-            clearInterval(timerInterval);
-            stopPlayback();
-            timerDisplay.textContent = "⏰ Radio apagada";
-        }
+        if (timerSeconds <= 0) { clearInterval(timerInterval); stopPlayback(); }
     }, 1000);
 }
 
-// --- Eventos finales ---
+// --- Eventos de Controles ---
 menuToggle.onclick = openMenu;
 closeMenuBtn.onclick = closeMenu;
 overlay.onclick = closeMenu;
@@ -323,16 +209,10 @@ btnPlayPause.onclick = () => {
     if (audioPlayer.paused) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         isPlayingManually = true;
-        requestWakeLock();
-        startHeartbeat();
-        startSilentTone();
-        if (keepAliveVideo) keepAliveVideo.play();
         audioPlayer.play();
         btnPlayPause.textContent = "Pausa";
-        btnPlayPause.classList.add('playing');
         visualizer.style.display = "flex";
         liveBadge.style.display = "block";
-        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "playing";
         animateVisualizer();
     } else {
         stopPlayback();

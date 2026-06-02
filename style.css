@@ -1,282 +1,290 @@
 body {
-    font-family: 'Sriracha', cursive; /* Fuente principal para toda la aplicación */
-    background: linear-gradient(-45deg, #050505, #1e2a4a, #0f0c29, #24243e); /* Gradiente de fondo animado */
-    background-size: 400% 400%; /* Tamaño aumentado para permitir el movimiento del gradiente */
-    animation: gradientBG 15s ease infinite; /* Animación continua para el fondo dinámico */
-    color: #ffffff; /* Color de texto blanco por defecto */
-    display: flex; /* Uso de flexbox para el centrado */
-    justify-content: center; /* Centrado horizontal del contenido principal */
-    align-items: center; /* Centrado vertical del contenido principal */
-    min-height: 100vh; /* Ocupa al menos el 100% de la altura de la ventana */
-    margin: 0; /* Elimina los márgenes del navegador */
-    overflow: hidden; /* Evita que aparezcan barras de desplazamiento */
+  font-family: 'Sriracha', cursive; /* Fuente principal de la aplicación */
+  background: linear-gradient(-45deg, #050505, #1e2a4a, #0f0c29, #24243e); /* Fondo con degradado animado */
+  background-size: 400% 400%; /* Tamaño expandido para la animación del fondo */
+  animation: gradientBG 15s ease infinite; /* Animación infinita del fondo */
+  color: #ffffff; /* Color de texto blanco general */
+  display: flex; /* Uso de flexbox para centrado */
+  justify-content: center; /* Centrado horizontal */
+  align-items: center; /* Centrado vertical */
+  min-height: 100vh; /* Ocupa el alto total de la ventana */
+  margin: 0; /* Sin márgenes exteriores */
+  overflow: hidden; /* Evita desplazamientos innecesarios */
 }
 
 @keyframes gradientBG {
-    0% { background-position: 0% 50%; } /* Posición inicial del gradiente */
-    50% { background-position: 100% 50%; } /* Posición intermedia para el efecto de movimiento */
-    100% { background-position: 0% 50%; } /* Vuelve a la posición inicial para el bucle */
+  0% { background-position: 0% 50%; } /* Posición de inicio del degradado */
+  50% { background-position: 100% 50%; } /* Posición media del degradado */
+  100% { background-position: 0% 50%; } /* Retorno al inicio */
 }
 
 .menu-toggle {
-    position: fixed; /* Mantiene el botón fijo al desplazarse */
-    top: 20px; /* Separación desde la parte superior */
-    left: 20px; /* Separación desde la izquierda */
-    background: rgba(233, 69, 96, 0.9); /* Fondo rojo con transparencia */
-    border: none; /* Sin borde exterior */
-    color: white; /* Color del icono de hamburguesa */
-    font-size: 1.5rem; /* Tamaño del icono */
-    padding: 10px 15px; /* Espaciado interno del botón */
-    border-radius: 12px; /* Esquinas redondeadas */
-    cursor: pointer; /* Cambia el cursor a mano al pasar por encima */
-    z-index: 100; /* Se asegura de estar por encima de otros elementos */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3); /* Sombra para dar profundidad */
+  position: fixed; /* Botón fijo en pantalla */
+  top: 20px; /* Distancia desde arriba */
+  left: 20px; /* Distancia desde la izquierda */
+  background: rgba(233, 69, 96, 0.9); /* Color de fondo rojizo */
+  border: none; /* Sin bordes */
+  color: white; /* Color del icono */
+  font-size: 1.5rem; /* Tamaño del icono */
+  padding: 10px 15px; /* Espaciado interno */
+  border-radius: 12px; /* Esquinas redondeadas */
+  cursor: pointer; /* Cursor tipo mano */
+  z-index: 100; /* Por encima de otros elementos */
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3); /* Sombra de profundidad */
 }
 
 .sidebar {
-    position: fixed; /* Menú lateral fijo */
-    top: 0; /* Desde el borde superior */
-    left: -300px; /* Escondido fuera de pantalla por defecto */
-    width: 280px; /* Ancho del menú lateral */
-    height: 100%; /* Altura completa de la pantalla */
-    background: rgba(10, 10, 25, 0.98); /* Fondo oscuro casi opaco */
-    backdrop-filter: blur(15px); /* Efecto de cristal esmerilado */
-    z-index: 1000; /* Máxima prioridad sobre todo el diseño */
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Transición suave al abrir y cerrar */
-    padding: 20px; /* Espaciado interno de los elementos */
-    box-sizing: border-box; /* Incluye el padding en el cálculo del ancho */
+  position: fixed; /* Menú lateral fijo */
+  top: 0; /* Desde el tope superior */
+  left: -300px; /* Oculto a la izquierda */
+  width: 280px; /* Ancho del menú */
+  height: 100%; /* Alto total de pantalla */
+  background: rgba(10, 10, 25, 0.98); /* Fondo oscuro profundo */
+  backdrop-filter: blur(15px); /* Desenfoque de fondo */
+  z-index: 1000; /* Máxima prioridad de capa */
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Transición suave de apertura */
+  padding: 20px; /* Espaciado interno */
+  box-sizing: border-box; /* Padding incluido en el ancho */
 }
 
 .sidebar.open {
-    left: 0; /* Posición visible al activarse */
+  left: 0; /* Posición cuando está abierto */
 }
 
 .sidebar-header {
-    display: flex; /* Disposición flexible de la cabecera */
-    justify-content: space-between; /* Título a la izquierda y X a la derecha */
-    align-items: center; /* Alineación vertical central */
-    margin-bottom: 25px; /* Separación con la lista de radios */
+  display: flex; /* Cabecera en modo flexible */
+  justify-content: space-between; /* Elementos a los extremos */
+  align-items: center; /* Centrado vertical */
+  margin-bottom: 25px; /* Margen inferior */
 }
 
 .close-menu {
-    background: none; /* Sin fondo de botón */
-    border: none; /* Sin bordes */
-    color: #ff4d4d; /* Color rojo para el botón de cerrar */
-    font-size: 1.4rem; /* Tamaño del icono X */
-    cursor: pointer; /* Cursor de mano */
+  background: none; /* Sin fondo */
+  border: none; /* Sin bordes */
+  color: #ff4d4d; /* Color rojo de cierre */
+  font-size: 1.4rem; /* Tamaño de icono */
+  cursor: pointer; /* Cursor tipo mano */
 }
 
 .overlay {
-    position: fixed; /* Capa que cubre toda la pantalla */
-    top: 0; /* Desde arriba */
-    left: 0; /* Desde la izquierda */
-    width: 100%; /* Ancho total */
-    height: 100%; /* Altura total */
-    background: rgba(0,0,0,0.7); /* Color negro semitransparente */
-    display: none; /* Oculta por defecto */
-    z-index: 999; /* Por debajo del sidebar pero sobre la app */
+  position: fixed; /* Capa oscura fija */
+  top: 0; /* Desde el tope */
+  left: 0; /* Desde la izquierda */
+  width: 100%; /* Ancho total */
+  height: 100%; /* Alto total */
+  background: rgba(0,0,0,0.7); /* Color negro semitransparente */
+  display: none; /* Oculto por defecto */
+  z-index: 999; /* Debajo del sidebar */
 }
 
 .overlay.active {
-    display: block; /* Se muestra cuando el menú está abierto */
+  display: block; /* Visible cuando el menú abre */
 }
 
 .radio-card {
-    background: rgba(255, 255, 255, 0.07); /* Fondo tipo cristal muy suave */
-    backdrop-filter: blur(25px); /* Efecto de desenfoque de cristal */
-    padding: 30px; /* Espaciado interno del reproductor */
-    border-radius: 35px; /* Bordes muy redondeados */
-    width: 90%; /* Ancho responsivo para móviles */
-    max-width: 380px; /* Ancho máximo en pantallas grandes */
-    box-shadow: 0 25px 60px rgba(0,0,0,0.7); /* Sombra intensa para efecto elevado */
-    border: 1px solid rgba(255,255,255,0.15); /* Borde fino para resaltar el cristal */
-    position: relative; /* Referencia para elementos posicionados absolutos */
+  background: rgba(255, 255, 255, 0.07); /* Fondo tipo cristal sutil */
+  backdrop-filter: blur(25px); /* Desenfoque tipo Glassmorphism */
+  padding: 30px; /* Espaciado de la tarjeta */
+  border-radius: 35px; /* Bordes muy redondeados */
+  width: 90%; /* Ancho responsivo */
+  max-width: 380px; /* Ancho máximo */
+  box-shadow: 0 25px 60px rgba(0,0,0,0.7); /* Sombra intensa */
+  border: 1px solid rgba(255,255,255,0.15); /* Borde fino de cristal */
+  position: relative; /* Referencia de posición */
 }
 
 .header-container {
-    display: flex; /* Alineación horizontal del título y reloj */
-    justify-content: space-between; /* Distribución en los extremos */
-    align-items: center; /* Alineación vertical central */
-    margin-bottom: 15px; /* Separación inferior */
+  display: flex; /* Cabecera flexible */
+  justify-content: space-between; /* Distribución de extremos */
+  align-items: center; /* Centrado vertical */
+  margin-bottom: 15px; /* Margen inferior */
 }
 
 .header-container h1 {
-    font-size: 1rem; /* Tamaño moderado para el título */
-    margin: 0; /* Elimina márgenes extra */
-    opacity: 0.9; /* Ligera transparencia */
+  font-size: 1rem; /* Tamaño del título principal */
+  margin: 0; /* Sin márgenes */
+  opacity: 0.9; /* Opacidad sutil */
 }
 
 .digital-clock {
-    font-family: 'Lobster', cursive; /* Fuente artística para el reloj */
-    font-size: 1rem; /* Tamaño de los números del reloj */
-    color: #00d2ff; /* Color cian vibrante */
-    background: rgba(0,0,0,0.4); /* Fondo oscuro para resaltar números */
-    padding: 5px 10px; /* Espaciado interno del reloj */
-    border-radius: 8px; /* Redondeado de los bordes del reloj */
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.5); /* Sombra interna para efecto hueco */
+  font-family: 'Lobster', cursive; /* Fuente artística del reloj */
+  font-size: 1rem; /* Tamaño del reloj */
+  color: #00d2ff; /* Color cian */
+  background: rgba(0,0,0,0.4); /* Fondo del reloj */
+  padding: 5px 10px; /* Espaciado del reloj */
+  border-radius: 8px; /* Bordes del reloj */
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.5); /* Sombra interna del reloj */
 }
 
 .live-badge {
-    position: absolute; /* Posicionamiento libre sobre la tarjeta */
-    top: -12px; /* Flota por encima del borde superior */
-    right: 30px; /* Separación desde la derecha */
-    background: #ff0000; /* Rojo intenso de directo */
-    font-size: 0.65rem; /* Letra pequeña y compacta */
-    padding: 5px 10px; /* Espaciado interno del badge */
-    border-radius: 6px; /* Esquinas ligeramente redondeadas */
-    font-weight: bold; /* Texto resaltado */
-    box-shadow: 0 4px 10px rgba(255,0,0,0.4); /* Resplandor neón rojo */
-    display: none; /* Se activa mediante JavaScript al sonar */
+  position: absolute; /* Posición absoluta sobre la tarjeta */
+  top: -12px; /* Flotando arriba */
+  right: 30px; /* Alineado a la derecha */
+  background: #ff0000; /* Fondo rojo de directo */
+  font-size: 0.65rem; /* Texto pequeño */
+  padding: 5px 10px; /* Espaciado del badge */
+  border-radius: 6px; /* Redondeo del badge */
+  font-weight: bold; /* Texto resaltado */
+  box-shadow: 0 4px 10px rgba(255,0,0,0.4); /* Resplandor neón */
+  display: none; /* Oculto hasta que suene la música */
 }
 
 .now-playing {
-    margin: 20px 0; /* Separación vertical */
-    padding: 25px; /* Espaciado interno de la pantalla de info */
-    background: rgba(255,255,255,0.04); /* Fondo suave para la zona de texto */
-    border-radius: 25px; /* Bordes redondeados de la zona interna */
-    text-align: center; /* Centrado del texto informativo */
+  margin: 20px 0; /* Márgenes de la zona central */
+  padding: 25px; /* Espaciado de la zona central */
+  background: rgba(255,255,255,0.04); /* Fondo sutil de info */
+  border-radius: 25px; /* Esquinas redondeadas */
+  text-align: center; /* Texto centrado */
+}
+
+.track-info {
+  font-size: 0.85rem; /* Tamaño de la info de canción */
+  color: #00d2ff; /* Color cian brillante */
+  margin-top: 5px; /* Separación superior */
+  min-height: 1.2rem; /* Espacio reservado constante */
+  font-weight: normal; /* Grosor normal */
+  opacity: 0.8; /* Ligeramente transparente */
 }
 
 .timer-display {
-    font-size: 0.75rem; /* Tamaño de fuente para el temporizador */
-    color: #ff4d6d; /* Color rosado neón */
-    margin-top: 10px; /* Separación superior */
-    font-weight: bold; /* Texto en negrita */
+  font-size: 0.75rem; /* Tamaño del texto del temporizador */
+  color: #ff4d6d; /* Color rosado neón */
+  margin-top: 10px; /* Separación superior */
+  font-weight: bold; /* Texto resaltado */
 }
 
 .visualizer {
-    display: flex; /* Contenedor flexible para las barras */
-    justify-content: center; /* Barras centradas horizontalmente */
-    align-items: flex-end; /* Barras crecen desde la base */
-    gap: 4px; /* Espacio entre las barras del ecualizador */
-    height: 45px; /* Altura máxima del visualizador */
-    margin-bottom: 15px; /* Separación con el texto de abajo */
-    display: none; /* Se activa por JavaScript al reproducir */
+  display: flex; /* Contenedor de barras flexible */
+  justify-content: center; /* Centrado horizontal */
+  align-items: flex-end; /* Alineación desde la base */
+  gap: 4px; /* Espacio entre barras */
+  height: 45px; /* Altura del visualizador */
+  margin-bottom: 15px; /* Margen inferior */
+  display: none; /* Oculto hasta que suene */
 }
 
 .bar {
-    width: 6px; /* Ancho individual de cada barra */
-    height: 4px; /* Altura inicial mínima */
-    background: linear-gradient(to top, #00d2ff, #e94560); /* Degradado neón de azul a rosa */
-    border-radius: 3px; /* Barras redondeadas en las puntas */
-    transition: height 0.1s ease; /* Suavizado para el movimiento del audio real */
-    box-shadow: 0 0 10px rgba(0, 210, 255, 0.4); /* Efecto de brillo exterior */
+  width: 6px; /* Ancho de cada barra */
+  height: 4px; /* Altura mínima inicial */
+  background: linear-gradient(to top, #00d2ff, #e94560); /* Degradado neón */
+  border-radius: 3px; /* Puntas redondeadas */
+  transition: height 0.1s ease; /* Transición suave de movimiento */
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.4); /* Brillo de la barra */
 }
 
 .timer-section {
-    margin-bottom: 25px; /* Separación inferior */
-    font-size: 0.85rem; /* Tamaño de letra de la etiqueta */
-    color: #aaa; /* Color gris para texto secundario */
+  margin-bottom: 25px; /* Separación inferior de temporizador */
+  font-size: 0.85rem; /* Tamaño de etiqueta */
+  color: #aaa; /* Color gris suave */
 }
 
 .timer-buttons {
-    display: flex; /* Botones en fila horizontal */
-    gap: 10px; /* Espacio entre cada botón */
-    margin-top: 10px; /* Separación con el texto superior */
+  display: flex; /* Botones en línea */
+  gap: 10px; /* Espacio entre botones */
+  margin-top: 10px; /* Margen superior */
 }
 
 .timer-buttons button {
-    background: rgba(255,255,255,0.1); /* Fondo transparente para botones */
-    border: none; /* Sin bordes */
-    color: white; /* Color de texto blanco */
-    padding: 10px; /* Espaciado para pulsación táctil */
-    border-radius: 10px; /* Bordes redondeados */
-    cursor: pointer; /* Mano al pasar por encima */
-    flex: 1; /* Todos los botones ocupan el mismo ancho */
-    font-size: 0.75rem; /* Tamaño de texto de tiempo */
-    transition: 0.2s; /* Suavizado al interactuar */
+  background: rgba(255,255,255,0.1); /* Fondo transparente */
+  border: none; /* Sin bordes */
+  color: white; /* Texto blanco */
+  padding: 10px; /* Espaciado táctil */
+  border-radius: 10px; /* Esquinas redondeadas */
+  cursor: pointer; /* Cursor tipo mano */
+  flex: 1; /* Distribución uniforme */
+  font-size: 0.75rem; /* Tamaño de texto */
+  transition: 0.2s; /* Tiempo de respuesta */
 }
 
 .timer-buttons button:active {
-    background: rgba(255,255,255,0.2); /* Efecto visual al pulsar */
+  background: rgba(255,255,255,0.2); /* Oscurece al pulsar */
 }
 
 .timer-buttons button.off {
-    color: #ff4d4d; /* Color rojo para el botón de desactivar */
+  color: #ff4d4d; /* Rojo para botón de apagado */
 }
 
 .volume-container {
-    display: flex; /* Alineación horizontal de iconos y barra */
-    align-items: center; /* Centrado vertical */
-    gap: 10px; /* Espacio entre los elementos de volumen */
-    margin-bottom: 20px; /* Separación inferior */
+  display: flex; /* Contenedor de volumen flexible */
+  align-items: center; /* Centrado vertical */
+  gap: 10px; /* Espacio entre iconos y barra */
+  margin-bottom: 20px; /* Margen inferior */
 }
 
 #volume-slider {
-    flex: 1; /* La barra ocupa todo el espacio restante */
-    cursor: pointer; /* Cursor de mano para ajuste */
+  flex: 1; /* La barra ocupa el espacio disponible */
+  cursor: pointer; /* Cursor tipo mano */
 }
 
 #btn-play-pause {
-    background: linear-gradient(135deg, #e94560, #b03045); /* Degradado del botón de acción */
-    border: none; /* Sin bordes */
-    padding: 20px; /* Gran área táctil */
-    color: white; /* Texto del botón blanco */
-    border-radius: 20px; /* Bordes muy redondeados */
-    font-weight: bold; /* Texto en negrita */
-    width: 100%; /* Ancho total de la tarjeta */
-    font-size: 1.2rem; /* Tamaño de fuente grande */
-    box-shadow: 0 10px 20px rgba(233, 69, 96, 0.3); /* Sombra roja de fondo */
-    cursor: pointer; /* Mano al pasar por encima */
-    transition: transform 0.2s; /* Suavizado al presionar */
+  background: linear-gradient(135deg, #e94560, #b03045); /* Degradado del botón principal */
+  border: none; /* Sin bordes */
+  padding: 20px; /* Área táctil amplia */
+  color: white; /* Texto blanco */
+  border-radius: 20px; /* Esquinas redondeadas */
+  font-weight: bold; /* Texto resaltado */
+  width: 100%; /* Ancho total */
+  font-size: 1.2rem; /* Tamaño de fuente */
+  box-shadow: 0 10px 20px rgba(233, 69, 96, 0.3); /* Sombra del botón */
+  cursor: pointer; /* Cursor tipo mano */
+  transition: transform 0.2s; /* Respuesta táctil */
 }
 
 #btn-play-pause:active {
-    transform: scale(0.98); /* Pequeño efecto de pulsación */
+  transform: scale(0.98); /* Pequeño efecto de hundimiento */
 }
 
 .search-box input {
-    width: 100%; /* Ancho total del buscador */
-    padding: 15px; /* Espaciado interno de escritura */
-    border-radius: 15px; /* Bordes redondeados del input */
-    border: 1px solid rgba(255,255,255,0.1); /* Borde sutil transparente */
-    background: rgba(0,0,0,0.5); /* Fondo negro semitransparente */
-    color: white; /* Color de escritura blanco */
-    box-sizing: border-box; /* Padding incluido en el ancho total */
-    margin-bottom: 20px; /* Separación inferior */
-    outline: none; /* Sin borde de enfoque azul */
+  width: 100%; /* Ancho total del buscador */
+  padding: 15px; /* Espaciado de escritura */
+  border-radius: 15px; /* Esquinas redondeadas */
+  border: 1px solid rgba(255,255,255,0.1); /* Borde sutil */
+  background: rgba(0,0,0,0.5); /* Fondo oscuro */
+  color: white; /* Escritura en blanco */
+  box-sizing: border-box; /* Padding incluido */
+  margin-bottom: 20px; /* Margen inferior */
+  outline: none; /* Sin borde de enfoque */
 }
 
 .station-list {
-    list-style: none; /* Elimina puntos de lista */
-    padding: 0; /* Sin espaciado lateral */
-    max-height: calc(100vh - 220px); /* Altura dinámica basada en la pantalla */
-    overflow-y: auto; /* Scroll vertical si hay muchas emisoras */
+  list-style: none; /* Sin puntos de lista */
+  padding: 0; /* Sin márgenes internos */
+  max-height: calc(100vh - 220px); /* Altura dinámica para scroll */
+  overflow-y: auto; /* Desplazamiento vertical activo */
 }
 
 .station-item {
-    padding: 18px; /* Área táctil amplia */
-    border-radius: 15px; /* Bordes redondeados de cada fila */
-    margin-bottom: 10px; /* Separación entre emisoras */
-    display: flex; /* Organización horizontal interna */
-    justify-content: space-between; /* Nombre a izquierda y estrella a derecha */
-    align-items: center; /* Alineación vertical */
-    background: rgba(255,255,255,0.03); /* Fondo muy sutil */
-    cursor: pointer; /* Mano al pasar por encima */
-    transition: 0.2s; /* Suavizado al interactuar */
+  padding: 18px; /* Espacio de cada radio */
+  border-radius: 15px; /* Redondeo de la fila */
+  margin-bottom: 10px; /* Separación entre filas */
+  display: flex; /* Fila flexible */
+  justify-content: space-between; /* Elementos a los extremos */
+  align-items: center; /* Centrado vertical */
+  background: rgba(255,255,255,0.03); /* Fondo sutil */
+  cursor: pointer; /* Cursor tipo mano */
+  transition: 0.2s; /* Suavidad general */
 }
 
 .station-item.active {
-    background: rgba(233, 69, 96, 0.25); /* Color distintivo para la radio activa */
-    border-left: 5px solid #e94560; /* Borde de color lateral indicador */
+  background: rgba(233, 69, 96, 0.25); /* Color para la radio activa */
+  border-left: 5px solid #e94560; /* Indicador lateral */
 }
 
 .fav-btn {
-    font-size: 1.3rem; /* Tamaño de la estrella */
-    filter: grayscale(1); /* Color gris si no es favorita */
-    transition: 0.3s; /* Suavizado del cambio de color */
+  font-size: 1.3rem; /* Tamaño de estrella */
+  filter: grayscale(1); /* Gris por defecto */
+  transition: 0.3s; /* Suavidad de cambio */
 }
 
 .fav-btn.is-fav {
-    filter: grayscale(0); /* Color real cuando es favorita */
+  filter: grayscale(0); /* Color real en favoritas */
 }
 
-/* Scrollbar personalizado para navegadores modernos */
 .station-list::-webkit-scrollbar {
-    width: 4px; /* Grosor de la barra de scroll lateral */
+  width: 4px; /* Ancho de barra de scroll */
 }
 
 .station-list::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.2); /* Color de la pieza que se mueve */
-    border-radius: 10px; /* Redondeado de la pieza del scroll */
+  background: rgba(255,255,255,0.2); /* Color de la barra de scroll */
+  border-radius: 10px; /* Redondeo de barra */
 }
