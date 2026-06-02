@@ -12,11 +12,13 @@ const stations = [
     { name: "Soulful House", url: "https://radio4.vip-radios.fm:18057/stream-128kmp3-SoulfulHouse" } 
 ];
 
-// --- Registro de Service Worker para estabilidad en Android ---
+// --- Registro de Service Worker CORREGIDO ---
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        // Registramos un worker básico para mejorar la persistencia en segundo plano
-        navigator.serviceWorker.register('data:application/javascript,self.addEventListener("fetch", function(event){});').catch(err => console.log("SW non-critical error", err));
+        // Ahora apuntamos al archivo físico sw.js para que Android no dé error de protocolo
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log("Service Worker registrado con éxito", reg))
+            .catch(err => console.log("Error al registrar el SW", err));
     });
 }
 
@@ -107,7 +109,7 @@ function updateClock() {
     clockDisplay.textContent = `${h}:${m}:${s}`;
 }
 
-// --- Wake Lock (Previene sueño de pantalla/CPU) ---
+// --- Wake Lock ---
 async function requestWakeLock() {
     if ('wakeLock' in navigator) {
         try {
@@ -159,7 +161,7 @@ function toggleFavorite(name) {
     renderStations(searchInput.value);
 }
 
-// --- MediaSession (Comunicación con Android) ---
+// --- MediaSession ---
 function updateMediaSession(stationName) {
     if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
@@ -174,12 +176,11 @@ function updateMediaSession(stationName) {
     }
 }
 
-// --- Latido de Red (Mantiene Wi-Fi activo) ---
+// --- Latido de Red ---
 function startHeartbeat() {
     if (heartbeatInterval) clearInterval(heartbeatInterval);
     heartbeatInterval = setInterval(() => {
         if (isPlayingManually) {
-            // Petición ligera para engañar al chip de red y que no se apague
             fetch('https://www.google.com', { mode: 'no-cors' }).catch(() => {});
         }
     }, 25000); 
@@ -190,7 +191,7 @@ function stopHeartbeat() {
     heartbeatInterval = null;
 }
 
-// --- Re-conexión Automática ---
+// --- Re-conexión ---
 function forceReconnection() {
     if (isPlayingManually) {
         const currentUrl = audioPlayer.src;
@@ -271,7 +272,7 @@ function stopPlayback() {
     stopHeartbeat();
 }
 
-// --- Controles Finales ---
+// --- Controles ---
 volumeSlider.oninput = (e) => { audioPlayer.volume = e.target.value; };
 
 btnPlayPause.onclick = () => {
