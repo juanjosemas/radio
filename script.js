@@ -12,6 +12,14 @@ const stations = [
     { name: "Soulful House", url: "https://radio4.vip-radios.fm:18057/stream-128kmp3-SoulfulHouse" } 
 ];
 
+// --- Registro de Service Worker para estabilidad en Android ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        // Registramos un worker básico para mejorar la persistencia en segundo plano
+        navigator.serviceWorker.register('data:application/javascript,self.addEventListener("fetch", function(event){});').catch(err => console.log("SW non-critical error", err));
+    });
+}
+
 // --- Estado global ---
 let favorites = JSON.parse(localStorage.getItem('myRadiosFavs')) || [];
 let timerInterval = null;
@@ -19,8 +27,9 @@ let timerSeconds = 0;
 let isPlayingManually = false; 
 let lastPlayPos = 0; 
 let wakeLock = null; 
+let heartbeatInterval = null; 
 
-// --- Variables para el Visualizador Real (Web Audio API) ---
+// --- Variables para el Visualizador Real ---
 let audioCtx = null;
 let analyser = null;
 let source = null;
@@ -35,7 +44,7 @@ const statusText = document.getElementById('status');
 const btnPlayPause = document.getElementById('btn-play-pause');
 const searchInput = document.getElementById('search-input');
 const visualizer = document.getElementById('visualizer');
-const bars = document.querySelectorAll('.bar'); // Seleccionamos todas las barras
+const bars = document.querySelectorAll('.bar'); 
 const liveBadge = document.getElementById('live-indicator');
 const timerDisplay = document.getElementById('timer-display');
 const clockDisplay = document.getElementById('digital-clock');
@@ -45,63 +54,51 @@ const menuToggle = document.getElementById('menu-toggle');
 const closeMenuBtn = document.getElementById('close-menu');
 const overlay = document.getElementById('overlay');
 
-// --- Inicialización del Analizador de Audio ---
+// --- Inicialización Audio ---
 function initAudioContext() {
-    // Solo creamos el contexto si no existe (obligatorio por seguridad del navegador)
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioCtx.createAnalyser();
-        // Conectamos el audio del reproductor al analizador
         source = audioCtx.createMediaElementSource(audioPlayer);
         source.connect(analyser);
         analyser.connect(audioCtx.destination);
-        
-        // Configuración de precisión (fftSize)
         analyser.fftSize = 64; 
         const bufferLength = analyser.frequencyBinCount;
         dataArray = new Uint8Array(bufferLength);
     }
 }
 
-// --- Función que anima las barras según el sonido real ---
+// --- Animación Visualizador ---
 function animateVisualizer() {
     if (!isPlayingManually) {
         cancelAnimationFrame(animationId);
         return;
     }
-    
     animationId = requestAnimationFrame(animateVisualizer);
-    analyser.getByteFrequencyData(dataArray); // Obtenemos datos de frecuencia actuales
-
-    // Iteramos por las 12 barras y les asignamos altura basada en el audio
+    analyser.getByteFrequencyData(dataArray);
     bars.forEach((bar, index) => {
-        // Usamos diferentes partes del array para que cada barra represente un tono (bajo, medio, agudo)
         const value = dataArray[index * 2] || 0; 
         const percent = (value / 255) * 100;
-        // Aplicamos la altura mínima de 4px y máxima de 45px
         const height = Math.max(4, (percent * 0.45)); 
         bar.style.height = `${height}px`;
-        // Efecto extra: la opacidad cambia ligeramente con la intensidad
         bar.style.opacity = 0.6 + (percent / 250);
     });
 }
 
-// --- Control del Menú Lateral ---
+// --- Menú ---
 function openMenu() {
     sidebar.classList.add('open');
     overlay.classList.add('active');
 }
-
 function closeMenu() {
     sidebar.classList.remove('open');
     overlay.classList.remove('active');
 }
-
 menuToggle.onclick = openMenu;
 closeMenuBtn.onclick = closeMenu;
 overlay.onclick = closeMenu;
 
-// --- Reloj Digital ---
+// --- Reloj ---
 function updateClock() {
     const now = new Date();
     const h = String(now.getHours()).padStart(2, '0');
@@ -110,7 +107,7 @@ function updateClock() {
     clockDisplay.textContent = `${h}:${m}:${s}`;
 }
 
-// --- Gestión de Wake Lock ---
+// --- Wake Lock (Previene sueño de pantalla/CPU) ---
 async function requestWakeLock() {
     if ('wakeLock' in navigator) {
         try {
@@ -120,7 +117,6 @@ async function requestWakeLock() {
         }
     }
 }
-
 function releaseWakeLock() {
     if (wakeLock !== null) {
         wakeLock.release();
@@ -128,7 +124,7 @@ function releaseWakeLock() {
     }
 }
 
-// --- Gestión de Emisoras ---
+// --- Emisoras ---
 function renderStations(filter = "") {
     stationList.innerHTML = "";
     const sortedStations = [...stations].sort((a, b) => {
@@ -136,22 +132,17 @@ function renderStations(filter = "") {
         const bFav = favorites.includes(b.name) ? 1 : 0;
         return bFav - aFav;
     });
-
     const filtered = sortedStations.filter(s => s.name.toLowerCase().includes(filter.toLowerCase()));
-
     filtered.forEach(station => {
         const li = document.createElement('li');
         li.className = `station-item ${currentStationTitle.textContent === station.name ? 'active' : ''}`;
         li.onclick = () => { playStation(station); closeMenu(); };
-        
         const nameSpan = document.createElement('span');
         nameSpan.textContent = station.name;
-        
         const favBtn = document.createElement('span');
         favBtn.className = `fav-btn ${favorites.includes(station.name) ? 'is-fav' : ''}`;
         favBtn.textContent = "⭐";
         favBtn.onclick = (e) => { e.stopPropagation(); toggleFavorite(station.name); };
-        
         li.appendChild(nameSpan);
         li.appendChild(favBtn);
         stationList.appendChild(li);
@@ -168,7 +159,7 @@ function toggleFavorite(name) {
     renderStations(searchInput.value);
 }
 
-// --- MediaSession ---
+// --- MediaSession (Comunicación con Android) ---
 function updateMediaSession(stationName) {
     if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
@@ -176,10 +167,30 @@ function updateMediaSession(stationName) {
             artist: "Radio Online - En Directo",
             artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/3103/3103181.png', sizes: '512x512', type: 'image/png' }]
         });
+        navigator.mediaSession.setActionHandler('play', () => { audioPlayer.play(); });
+        navigator.mediaSession.setActionHandler('pause', () => { stopPlayback(); });
+        navigator.mediaSession.setActionHandler('stop', () => { stopPlayback(); });
+        navigator.mediaSession.playbackState = "playing";
     }
 }
 
-// --- Estrategia Anti-Corte ---
+// --- Latido de Red (Mantiene Wi-Fi activo) ---
+function startHeartbeat() {
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
+    heartbeatInterval = setInterval(() => {
+        if (isPlayingManually) {
+            // Petición ligera para engañar al chip de red y que no se apague
+            fetch('https://www.google.com', { mode: 'no-cors' }).catch(() => {});
+        }
+    }, 25000); 
+}
+
+function stopHeartbeat() {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
+}
+
+// --- Re-conexión Automática ---
 function forceReconnection() {
     if (isPlayingManually) {
         const currentUrl = audioPlayer.src;
@@ -203,17 +214,14 @@ setInterval(() => {
 function playStation(station) {
     initAudioContext(); 
     if (audioCtx.state === 'suspended') audioCtx.resume();
-
     statusText.textContent = "Conectando...";
     currentStationTitle.textContent = station.name;
     isPlayingManually = true;
-    
     audioPlayer.pause();
     audioPlayer.src = station.url;
-    
     updateMediaSession(station.name);
     requestWakeLock();
-    
+    startHeartbeat();
     audioPlayer.play()
         .then(() => {
             statusText.textContent = "En directo";
@@ -258,10 +266,12 @@ function stopPlayback() {
     btnPlayPause.classList.remove('playing');
     visualizer.style.display = "none";
     liveBadge.style.display = "none";
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
     releaseWakeLock();
+    stopHeartbeat();
 }
 
-// --- Controles ---
+// --- Controles Finales ---
 volumeSlider.oninput = (e) => { audioPlayer.volume = e.target.value; };
 
 btnPlayPause.onclick = () => {
@@ -271,11 +281,13 @@ btnPlayPause.onclick = () => {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         isPlayingManually = true;
         requestWakeLock();
+        startHeartbeat();
         audioPlayer.play();
         btnPlayPause.textContent = "Pausa";
         btnPlayPause.classList.add('playing');
         visualizer.style.display = "flex";
         liveBadge.style.display = "block";
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "playing";
         animateVisualizer();
     } else {
         stopPlayback();
@@ -283,7 +295,6 @@ btnPlayPause.onclick = () => {
 };
 
 searchInput.oninput = (e) => renderStations(e.target.value);
-
 setInterval(updateClock, 1000);
 updateClock();
 renderStations();

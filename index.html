@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Radio Pro - España</title>
+    <!-- Enlace al manifiesto para evitar que Android cierre la app -->
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
     <!-- Importación de las Google Fonts elegidas -->
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;700&family=Amatic+SC:wght@700&family=Caveat:wght@700&family=Dancing+Script:wght@700&family=Lobster&family=Metal+Mania&family=Yellowtail&family=Permanent+Marker&family=Piedra&family=Sriracha&display=swap" rel="stylesheet">
@@ -44,7 +46,7 @@
         
         <!-- Pantalla de Información del reproductor -->
         <div class="now-playing">
-            <!-- Animación de barras de sonido reales (12 barras que reaccionarán por JS) -->
+            <!-- Animación de barras de sonido reales -->
             <div class="visualizer" id="visualizer">
                 <div class="bar"></div>
                 <div class="bar"></div>
@@ -82,7 +84,7 @@
             </div>
         </div>
 
-        <!-- Etiqueta de audio invisible con mejoras para móvil -->
+        <!-- Etiqueta de audio invisible -->
         <audio id="audio-player" playsinline webkit-playsinline preload="auto" crossorigin="anonymous"></audio>
         
         <!-- Botón principal de control -->

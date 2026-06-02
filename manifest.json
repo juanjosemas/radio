@@ -1,0 +1,17 @@
+{
+  "short_name": "RadioPro",
+  "name": "Radio Profesional España",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3103/3103181.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "theme_color": "#0a0a19",
+  "background_color": "#0a0a19",
+  "scope": "./",
+  "orientation": "portrait"
+}
