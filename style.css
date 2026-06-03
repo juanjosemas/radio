@@ -221,10 +221,11 @@ body {
   border: none; /* Sin bordes */
   padding: 20px; /* Área táctil amplia */
   color: white; /* Texto blanco */
+  font-family: Sriracha;
   border-radius: 20px; /* Esquinas redondeadas */
   font-weight: bold; /* Texto resaltado */
   width: 100%; /* Ancho total */
-  font-size: 1.2rem; /* Tamaño de fuente */
+  font-size: 1.5rem; /* Tamaño de fuente */
   box-shadow: 0 10px 20px rgba(233, 69, 96, 0.3); /* Sombra del botón */
   cursor: pointer; /* Cursor tipo mano */
   transition: transform 0.2s; /* Respuesta táctil */

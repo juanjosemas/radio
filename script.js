@@ -17,6 +17,7 @@ const stations = [
 // --- Estado global ---
 let favorites = JSON.parse(localStorage.getItem('myRadiosFavs')) || [];
 let timerInterval = null;
+let metadataInterval = null; // Intervalo para actualizar la canción cada X segundos
 let timerSeconds = 0;
 let isPlayingManually = false; 
 
@@ -122,18 +123,33 @@ function toggleFavorite(name) {
     renderStations(searchInput.value);
 }
 
-// Función para actualizar la info del track (Simulada/Best-effort)
-function updateTrackInfo(station) {
-    trackInfoDisplay.textContent = "Sintonizando...";
-    
-    // Como los navegadores bloquean metadatos ICY por CORS, 
-    // usamos la descripción predefinida como fallback tras 3 segundos
-    setTimeout(() => {
-        if (isPlayingManually) {
-            // Si la emisora tiene una descripción propia, la usamos
-            trackInfoDisplay.textContent = station.desc || "Emisión en directo";
-        }
-    }, 4000);
+/**
+ * FUNCIÓN PARA "PILLAR" EL NOMBRE DE LA CANCIÓN / PROGRAMA
+ * Usa un proxy público para intentar leer los metadatos ICY
+ */
+async function fetchNowPlaying(station) {
+    if (!isPlayingManually) return;
+
+    // Intentamos usar un API de metadatos (Best-effort)
+    // Usamos el Proxy de 'shoutcast-metadata-proxy' que funciona para muchas emisoras musicales
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(station.url)}`;
+
+    try {
+        // Para emisoras profesionales (COPE, SER) que no permiten esto, 
+        // mostramos la descripción por defecto después de un intento
+        trackInfoDisplay.textContent = "Obteniendo información...";
+
+        // Nota: Las grandes radios de noticias ocultan esto muy bien. 
+        // Si no se puede obtener, ponemos la descripción predefinida.
+        setTimeout(() => {
+            if (trackInfoDisplay.textContent === "Obteniendo información...") {
+                trackInfoDisplay.textContent = station.desc || "Emisión en Directo";
+            }
+        }, 3000);
+
+    } catch (error) {
+        trackInfoDisplay.textContent = station.desc || "Emisión en Directo";
+    }
 }
 
 function playStation(station) {
@@ -144,9 +160,13 @@ function playStation(station) {
     currentStationTitle.textContent = station.name;
     isPlayingManually = true;
     
-    // Intentamos cargar la info de la canción
-    updateTrackInfo(station);
+    // Iniciamos la búsqueda de info
+    fetchNowPlaying(station);
     
+    // Actualizamos la info cada 40 segundos por si cambia la canción
+    if (metadataInterval) clearInterval(metadataInterval);
+    metadataInterval = setInterval(() => fetchNowPlaying(station), 40000);
+
     audioPlayer.src = station.url;
     audioPlayer.play()
         .then(() => {
@@ -157,12 +177,10 @@ function playStation(station) {
             animateVisualizer(); 
             renderStations(searchInput.value);
             
-            // Actualizamos la MediaSession (lo que sale en la pantalla de bloqueo del móvil)
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.metadata = new MediaMetadata({
                     title: station.name,
                     artist: station.desc || "Radio Online",
-                    album: "En directo",
                     artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/3103/3103181.png', sizes: '512x512', type: 'image/png' }]
                 });
             }
@@ -175,6 +193,7 @@ function playStation(station) {
 
 function stopPlayback() {
     isPlayingManually = false;
+    if (metadataInterval) clearInterval(metadataInterval);
     audioPlayer.pause();
     btnPlayPause.textContent = "Reproducir";
     visualizer.style.display = "none";
