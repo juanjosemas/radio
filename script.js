@@ -7,6 +7,7 @@ const stations = [
     { name: "Funky house", url: "https://stream.technolovers.fm/funky-house", desc: "Lo mejor del Funky House" },
     { name: "Funky disco", url: "https://funky-disco-hits.stream.laut.fm/funky-disco-hits", desc: "Disco y Funk clásico" },
     { name: "Funky 80's", url: "https://play.radioking.io/fm80funkymusic/523739", desc: "Clásicos de los 80" },
+    { name: "Funk y Soul de los 80", url: "https://streams.80s80s.de/soul/mp3-192/", desc: "Clasicos de los 80" },
     { name: "Deep House", url: "https://hits1deep-audiomediaradio.radioca.st/deep", desc: "Sonido Deep Relax" }, 
     { name: "181.FM Soul", url: "https://listen.181fm.com/181-soul_128k.mp3", desc: "R&B y Soul" },
     { name: "Soulful House", url: "https://radio4.vip-radios.fm:18057/stream-128kmp3-SoulfulHouse", desc: "House con Alma" }, 
