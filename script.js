@@ -12,6 +12,7 @@ const stations = [
     { name: "181.FM Soul", url: "https://listen.181fm.com/181-soul_128k.mp3", desc: "R&B y Soul" },
     { name: "Soulful House", url: "https://radio4.vip-radios.fm:18057/stream-128kmp3-SoulfulHouse", desc: "House con Alma" }, 
     { name: "Deep Radio", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/DEEP_RADIO.mp3", desc: "Deep & Chill" }, 
+    { name: "D", url: "https:", desc: "Deep & Chill" },
     { name: "Nostalgie Funky", url: "https://streaming.nrjaudio.fm/ou7x6kf3s5gi", desc: "Grandes Clásicos Funk" }
 ];
 
@@ -72,8 +73,31 @@ function initAudioContext() {
         masterGain.gain.value = 1.0; 
         analyser.fftSize = 64; 
         dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        watchAudioContext();
     }
 }
+
+// --- Vigilar el AudioContext para que no se quede "suspended" ---
+function watchAudioContext() {
+    audioCtx.addEventListener('statechange', () => {
+        if (audioCtx.state === 'suspended' && isPlayingManually) {
+            audioCtx.resume();
+        }
+    });
+}
+
+// --- Mantener la reproducción viva cuando la pantalla se apaga / la pestaña se oculta ---
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && isPlayingManually) {
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        if (audioPlayer.paused) {
+            audioPlayer.play().catch(() => {});
+        }
+    }
+});
 
 // --- Animación Visualizador ---
 function animateVisualizer() {
@@ -184,6 +208,7 @@ function playStation(station) {
                     artist: station.desc || "Radio Online",
                     artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/3103/3103181.png', sizes: '512x512', type: 'image/png' }]
                 });
+                navigator.mediaSession.playbackState = "playing";
             }
         })
         .catch(() => {
@@ -216,6 +241,42 @@ function setTimer(minutes) {
         if (timerSeconds <= 0) { clearInterval(timerInterval); stopPlayback(); }
     }, 1000);
 }
+
+// --- MediaSession: controles para que Android/iOS no mate la reproducción ---
+if ('mediaSession' in navigator) {
+    navigator.mediaSession.setActionHandler('play', () => {
+        initAudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        isPlayingManually = true;
+        audioPlayer.play().catch(() => {});
+        btnPlayPause.textContent = "Pausa";
+        visualizer.style.display = "flex";
+        liveBadge.style.display = "block";
+        animateVisualizer();
+        navigator.mediaSession.playbackState = "playing";
+    });
+    navigator.mediaSession.setActionHandler('pause', () => {
+        stopPlayback();
+        navigator.mediaSession.playbackState = "paused";
+    });
+    navigator.mediaSession.setActionHandler('stop', () => {
+        stopPlayback();
+        navigator.mediaSession.playbackState = "none";
+    });
+}
+
+// --- Reconexión automática si el stream se corta o se pausa solo ---
+audioPlayer.addEventListener('stalled', () => {
+    if (isPlayingManually) audioPlayer.play().catch(() => {});
+});
+audioPlayer.addEventListener('ended', () => {
+    if (isPlayingManually) audioPlayer.play().catch(() => {});
+});
+audioPlayer.addEventListener('pause', () => {
+    if (isPlayingManually && document.hidden) {
+        audioPlayer.play().catch(() => {});
+    }
+});
 
 // --- Eventos de Controles ---
 menuToggle.onclick = openMenu;
