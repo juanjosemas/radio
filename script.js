@@ -45,6 +45,161 @@ let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 50;
 let reconnectTimer = null;
 
+// ╔══════════════════════════════════════════════════════════╗
+// ║  ANTI-EMUI / ANTI-HUAWEI: Audio Silencioso Periódico  ║
+// ║  Mantiene el pipeline de audio activo para que el SO   ║
+// ║  no mate la app (específico para Huawei EMUI 12)       ║
+// ╚══════════════════════════════════════════════════════════╝
+
+let silentOscillator = null;
+let silentGain = null;
+let silentInterval = null;
+let emuiKeepAliveInterval = null;
+
+/**
+ * Crea un tono silencioso muy corto (100ms) que mantiene
+ * el pipeline de audio activo. EMUI no mata la app si hay
+ * actividad de audio reciente.
+ */
+function playSilentPing() {
+    try {
+        if (!audioCtx) return;
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume().catch(() => {});
+        }
+        
+        // Crear un oscilador temporal
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        // Volumen imperceptible
+        gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
+        
+        // Frecuencia inaudible
+        osc.frequency.setValueAtTime(18000, audioCtx.currentTime);
+        
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + 0.1); // 100ms
+        
+        console.log('[AntiEMUI] 🔊 Silent ping enviado');
+    } catch(e) {
+        console.log('[AntiEMUI] Error en ping:', e);
+    }
+}
+
+/**
+ * Inicia el envío de pings silenciosos cada 90 segundos
+ * Esto evita que EMUI considere la app "inactiva"
+ */
+function startSilentPing() {
+    stopSilentPing();
+    // Primer ping inmediato
+    playSilentPing();
+    // Después cada 90 segundos (antes del timeout de 5 min de EMUI)
+    silentInterval = setInterval(() => {
+        if (isPlayingManually) {
+            playSilentPing();
+        }
+    }, 90000);
+    console.log('[AntiEMUI] ✅ Silent ping activado (cada 90s)');
+}
+
+function stopSilentPing() {
+    if (silentInterval) {
+        clearInterval(silentInterval);
+        silentInterval = null;
+    }
+}
+
+/**
+ * Keep-alive agresivo para EMUI: reanuda todo cada 60 segundos
+ */
+function startEmuiKeepAlive() {
+    stopEmuiKeepAlive();
+    emuiKeepAliveInterval = setInterval(() => {
+        if (!isPlayingManually) return;
+        
+        // 1. Reanudar AudioContext
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume().catch(() => {});
+            console.log('[AntiEMUI] AudioContext reanudado');
+        }
+        
+        // 2. Si el audio está pausado, reintentar
+        if (audioPlayer.paused && isPlayingManually) {
+            console.log('[AntiEMUI] Audio pausado, reintentando...');
+            audioPlayer.play().catch(() => {});
+        }
+        
+        // 3. Enviar ping silencioso adicional
+        playSilentPing();
+        
+        // 4. Actualizar MediaSession para mantener vivo el proceso
+        if ('mediaSession' in navigator && currentStation) {
+            navigator.mediaSession.playbackState = "playing";
+        }
+    }, 60000); // Cada 60 segundos
+    console.log('[AntiEMUI] ✅ EMUI Keep-Alive activado (cada 60s)');
+}
+
+function stopEmuiKeepAlive() {
+    if (emuiKeepAliveInterval) {
+        clearInterval(emuiKeepAliveInterval);
+        emuiKeepAliveInterval = null;
+    }
+}
+
+/**
+ * Notificación persistente que mantiene viva la app
+ */
+let persistentNotification = null;
+
+function showPersistentNotification(station) {
+    if (!('Notification' in window)) return;
+    
+    if (Notification.permission === 'granted') {
+        createNotification(station);
+    } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                createNotification(station);
+            }
+        });
+    }
+}
+
+function createNotification(station) {
+    try {
+        persistentNotification = new Notification('🎵 Radio Pro - ' + station.name, {
+            body: station.desc || 'En directo - Tocando para volver a la app',
+            icon: 'https://cdn-icons-png.flaticon.com/512/3103/3103181.png',
+            silent: true, // No hacer sonido
+            renotify: true,
+            tag: 'radio-pro-playing'
+        });
+        
+        persistentNotification.onclick = () => {
+            window.focus();
+            persistentNotification.close();
+        };
+        
+        console.log('[AntiEMUI] ✅ Notificación persistente creada');
+    } catch(e) {
+        console.log('[AntiEMUI] Error creando notificación:', e);
+    }
+}
+
+function closePersistentNotification() {
+    if (persistentNotification) {
+        persistentNotification.close();
+        persistentNotification = null;
+    }
+}
+
 // --- Referencias DOM ---
 const audioPlayer = document.getElementById('audio-player');
 const currentStationTitle = document.getElementById('current-station');
@@ -301,19 +456,35 @@ document.addEventListener('visibilitychange', () => {
             }
             // Re-solicitar Wake Lock cuando volvamos
             scheduleWakeLockRetry();
+            // Enviar ping silencioso inmediato para EMUI
+            playSilentPing();
         }
     } else {
         console.log('[Visibility] 🖥️ Pantalla encendida / pestaña visible');
         if (isPlayingManually) {
-            // Reanudar AudioContext
+            // === REANIMACIÓN AGRESIVA (específico para Huawei) ===
+            console.log('[Visibility] 🔄 Reanimación agresiva activada');
+            
+            // 1. Reanudar AudioContext
             if (audioCtx && audioCtx.state === 'suspended') {
                 audioCtx.resume().catch(() => {});
             }
-            // Re-solicitar Wake Lock
+            // 2. Re-solicitar Wake Lock
             requestWakeLock();
-            // Verificar que el audio sigue sonando
+            // 3. Verificar que el audio sigue sonando
             if (audioPlayer.paused) {
                 audioPlayer.play().catch(() => {});
+            }
+            // 4. Enviar ping silencioso
+            playSilentPing();
+            // 5. Actualizar MediaSession
+            if (currentStation) {
+                updateMediaSession(currentStation);
+            }
+            // 6. Si el stream murió, reconectar
+            if (audioPlayer.paused && currentStation) {
+                console.log('[Visibility] ⚠️ Stream muerto tras apagado, reconectando...');
+                reconnectToStation();
             }
         }
     }
@@ -473,6 +644,11 @@ function playStation(station) {
             startKeepAlive();         // Mantener AudioContext vivo
             startHeartbeat();         // Verificar que el stream avanza
             
+            // === ANTI-EMUI (Huawei) ===
+            startSilentPing();        // Audio silencioso cada 90s
+            startEmuiKeepAlive();     // Keep-alive agresivo cada 60s
+            showPersistentNotification(station); // Notificación persistente
+            
             // === MediaSession ===
             updateMediaSession(station);
         })
@@ -499,6 +675,11 @@ function stopPlayback() {
     stopKeepAlive();
     stopHeartbeat();
     resetReconnect();
+    
+    // === DESACTIVAR ANTI-EMUI ===
+    stopSilentPing();
+    stopEmuiKeepAlive();
+    closePersistentNotification();
     
     if ('mediaSession' in navigator) {
         navigator.mediaSession.playbackState = "none";
@@ -539,6 +720,10 @@ if ('mediaSession' in navigator) {
         requestWakeLock();
         startKeepAlive();
         startHeartbeat();
+        
+        // Reactivar Anti-EMUI
+        startSilentPing();
+        startEmuiKeepAlive();
         
         navigator.mediaSession.playbackState = "playing";
     });
@@ -676,6 +861,10 @@ btnPlayPause.onclick = () => {
         requestWakeLock();
         startKeepAlive();
         startHeartbeat();
+        
+        // Reactivar Anti-EMUI
+        startSilentPing();
+        startEmuiKeepAlive();
         
         audioPlayer.play().catch(() => {});
         btnPlayPause.textContent = "Pausa";
