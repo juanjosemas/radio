@@ -2,12 +2,22 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Radio Pro - España</title>
-    <!-- Enlace al manifiesto para identificar la App -->
+    
+    <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a0a19">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RadioPro">
+    <meta name="application-name" content="RadioPro">
+    <meta name="description" content="Escucha emisoras de radio online en España">
+    
+    <!-- Para que no se ponga gris cuando la app pierde foco -->
+    <meta name="color-scheme" content="dark">
+    
     <link rel="stylesheet" href="style.css">
-    <!-- Importación de las Google Fonts elegidas -->
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;700&family=Amatic+SC:wght@700&family=Caveat:wght@700&family=Dancing+Script:wght@700&family=Lobster&family=Metal+Mania&family=Yellowtail&family=Permanent+Marker&family=Piedra&family=Sriracha&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -96,5 +106,31 @@
     </div>
 
     <script src="script.js"></script>
+    
+    <!-- Registro del Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((registration) => {
+                        console.log('[SW] ✅ Service Worker registrado:', registration.scope);
+                        
+                        // Verificar actualizaciones
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            console.log('[SW] 🔄 Nueva versión encontrada');
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'activated') {
+                                    console.log('[SW] ✅ Service Worker actualizado');
+                                }
+                            });
+                        });
+                    })
+                    .catch((err) => {
+                        console.log('[SW] ❌ Error al registrar:', err);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>
